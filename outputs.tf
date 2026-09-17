@@ -17,3 +17,23 @@ output "application_log_group_name" {
   description = "Seven-day CloudWatch application log group."
   value       = module.observability.log_group_name
 }
+
+output "discovery_role_policy_json" {
+  description = "Least-privilege policy document for the read-only discovery role."
+  value       = module.iam_policies.discovery_policy_json
+}
+
+output "tool_execution_role_policy_json" {
+  description = "Least-privilege policy document for the sandbox-gated tool-execution role."
+  value       = module.iam_policies.tool_execution_policy_json
+}
+
+output "control_plane_role_policy_json" {
+  description = "Least-privilege policy document for the policy-activation control-plane role."
+  value       = module.iam_policies.control_plane_policy_json
+}
+
+output "audit_reader_role_policy_json" {
+  description = "Read-only policy document for the audit-reader role."
+  value       = module.iam_policies.audit_reader_policy_json
+}
