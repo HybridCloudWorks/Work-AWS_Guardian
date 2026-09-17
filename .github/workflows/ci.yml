@@ -38,6 +38,7 @@ jobs:
       - run: python scripts/validate_policy_baseline.py
       - run: python scripts/seed_drift.py --help
       - run: PYTHONPATH=src python -m ccg.demo
+      - run: python scripts/gate02_preflight.py
 
   console:
     runs-on: ubuntu-latest
