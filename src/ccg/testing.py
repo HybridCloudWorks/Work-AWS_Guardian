@@ -12,6 +12,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from .authz import decide
 from .contracts import (
     AuditEvent,
     Decision,
@@ -39,6 +40,9 @@ class RecordingAuditSink(AuditSink):
 class InMemoryFindingRepository(FindingRepository):
     def __init__(self) -> None:
         self.findings: dict[str, Finding] = {}
+
+    def get(self, finding_id: str) -> Finding | None:
+        return self.findings.get(finding_id)
 
     def upsert(self, finding: Finding) -> None:
         self.findings[finding.finding_id] = finding
@@ -148,54 +152,11 @@ class InMemoryCedarGateway(GatewayInvocationPort):
         return InvocationResult(decision=decision, tool_result=result)
 
     def _evaluate(self, request: RemediationRequest) -> PolicyDecision:
-        now = datetime.now(timezone.utc)
-        matched: tuple[str, ...] = ()
-        reason = "default deny"
-
-        if request.tool not in self._tools:
-            reason = "unregistered tool"
-            matched = ("always-deny-unregistered-tool",)
-        elif request.target.is_production:
-            reason = "production target is forbidden"
-            matched = ("always-deny-production-target",)
-        elif not request.target.is_demo:
-            reason = "CCGDemo=true is required"
-            matched = ("always-deny-missing-demo-tag",)
-        elif (
-            request.tool == "security_group_correction"
-            and request.parameters.get("proposed_cidr") in {"0.0.0.0/0", "::/0"}
-        ):
-            reason = "global-open ingress is forbidden"
-            matched = ("always-deny-global-open-ingress",)
-        elif request.tool == "s3_encryption_enablement" and request.parameters.get("make_public") is True:
-            reason = "public S3 changes are forbidden"
-            matched = ("always-deny-public-s3",)
-        elif request.tool == "disable_cloudtrail":
-            reason = "CloudTrail disablement is forbidden"
-            matched = ("always-deny-cloudtrail-disablement",)
-        elif not self._permit_active:
-            reason = "permit set is inactive"
-            matched = ("default-deny-permits-inactive",)
-        else:
-            reason = "registered action permit matched"
-            matched = (f"permit-{request.tool}",)
-
-        decision = (
-            Decision.ALLOW
-            if self._permit_active
-            and not reason.endswith("forbidden")
-            and reason == "registered action permit matched"
-            else Decision.DENY
-        )
-        return PolicyDecision(
-            decision=decision,
-            request_id=request.request_id,
-            correlation_id=request.correlation_id,
-            actor=request.actor,
-            action_id=request.tool,
-            target_arn=request.target.arn,
-            matched_policy_ids=matched,
+        # Delegate to the shared authz engine so the double enforces exactly the
+        # same forbid-overrides-permit ordering the console/API rely on.
+        return decide(
+            request,
+            permit_active=self._permit_active,
+            registered_tools=frozenset(self._tools),
             policy_set_version=self._policy_version,
-            reason=reason,
-            evaluated_at=now,
         )

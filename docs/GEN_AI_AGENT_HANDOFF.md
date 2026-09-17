@@ -4,7 +4,7 @@
 Build a cost-bounded AWS sandbox POC that detects AWS Well-Architected Security-pillar drift, explains it through an admin console and optional Nova Sonic voice briefing, and proves that remediation is authorized at an external Cedar policy boundary—not by a prompt, client-side control, or application boolean.
 
 ## Required architecture
-- Python 3.12 Strands-compatible Discovery Agent; EventBridge schedule configurable, POC default 15 minutes; read Config, Security Hub, CloudTrail; no write permissions to audited resources.
+- Python 3.14 Strands-compatible Discovery Agent; EventBridge schedule configurable, POC default 15 minutes; read Config, Security Hub, CloudTrail; no write permissions to audited resources.
 - Normalize findings with IDs, rule/evidence, severity, target ARN, status, timestamps, correlation ID, accepted-risk details. Persist current state in on-demand DynamoDB and immutable/auditable JSON to private S3 with 30-day lifecycle expiration.
 - Remediation Agent exposes only registered, idempotent Gateway tools: restricted security-group correction, S3 encryption enablement, compliant tagging, and sandbox-safe access-key rotation workflow.
 - AgentCore Gateway / MCP tool boundary evaluates Cedar. Always-active forbids deny production-tagged targets, global-open ingress, public S3 changes, and CloudTrail disablement. A separately versioned permit set is off by default and is activated only through an audited admin control-plane operation.

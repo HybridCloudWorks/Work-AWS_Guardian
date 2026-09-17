@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "continuous-compliance-guardian"
 version = "0.1.0"
 description = "Typed domain contracts and safety-boundary ports for the CCG POC"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.14,<3.15"
 dependencies = []
 
 [tool.setuptools.packages.find]

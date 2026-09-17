@@ -4,6 +4,8 @@
 
 **Ordering:** Complete in dependency order. Every task must preserve the Cedar-first boundary and the POC cost/safety constraints.
 
+**Offline progress (2026-09-15):** Task 0.1 is resolved (see `docs/DESIGN_REVIEW_RECONCILIATION.md`). The parts of Phases 3–4 that require no live AWS have been implemented behind test doubles: deterministic discovery normalization/dedup (3.2), the four remediation tools as dry-run handlers (4.1), and the Cedar-first decision engine (4.2, local model). A runnable offline end-to-end harness (`src/ccg/demo.py`, wired into CI) proves discover → deny-while-inactive → audited activation → allow → idempotent execution → reconcile-to-RESOLVED. All work marked `[x]`/`[~]` below is **offline only** and does not lift the gate-0.2 requirements: live Gateway/target schema capture, real action IDs, live AWS effectors, and least-privilege roles are still required before any sandbox apply. Legend: `[x]` done, `[~]` partially done (offline model complete, live integration gated), `[ ]` not started.
+
 ## Phase 0 — Review and capability gates
 
 - [ ] **0.1 Approve requirements and design**
@@ -78,19 +80,22 @@
 
 ## Phase 3 — Discovery and evidence path
 
-- [ ] **3.1 Implement source adapters**
+- [x] **3.1 Implement source adapters** *(offline; live boto3 transports gated on 0.2)*
   - Add read-only adapters for Config, Security Hub, and CloudTrail behind interfaces/test doubles.
   - Define throttling, permission, malformed-response, and partial-run handling.
   - **Exit:** Unit tests cover source success/failure and no write permission is required.
+  - **Done:** `src/ccg/sources.py` provides `NormalizingSource` plus `config_source`/`security_hub_source`/`cloudtrail_source`, reading through an injected `SourceTransport` seam (no AWS SDK). Typed `SourceThrottledError`/`SourceUnauthorizedError`/`SourceUnavailableError` propagate as whole-source failures the coordinator records as partial runs; a single `MalformedRecordError` is skipped (counted) without fabricating a signal, or escalates under `strict=True`. Covered by `tests/test_sources.py`. Live boto3-backed transports under the read-only discovery role remain gated on 0.2.
 
-- [ ] **3.2 Implement normalization and deduplication**
+- [x] **3.2 Implement normalization and deduplication** *(offline; live source adapters still gated on 0.2/3.1)*
   - Produce deterministic finding IDs, evidence references, severity/status, target tags, timestamps, accepted-risk fields, and correlation propagation.
   - **Exit:** Replayed events update the same finding and cannot claim compliance from incomplete data.
+  - **Done:** `src/ccg/discovery.py` (`normalize_signal`, `merge_finding`, `derive_finding_id`) preserves `first_seen_at`, advances `last_seen_at` monotonically, bumps `revision` only on content change, preserves in-flight lifecycle status, and dedups within a run. Covered by `tests/test_discovery_merge.py`.
 
-- [ ] **3.3 Implement persistence and audit writes**
+- [x] **3.3 Implement persistence and audit writes** *(offline; live DynamoDB/S3 transports gated on 0.2)*
   - Upsert current state in DynamoDB and write redacted audit JSON to private S3.
   - Handle storage failure without silently losing decision/audit evidence.
   - **Exit:** Contract tests verify retention fields, redaction, idempotency, and partial failure behavior.
+  - **Done:** `src/ccg/audit.py` adds `FailClosedAuditSink` (a store failure raises `AuditWriteError` and dead-letters the event rather than dropping it) and `MultiplexAuditSink` (fan-out to current-state + audit stores; one failure never masks the others). `redact_details` is reused for the JSON-line writer. Contract tests: `tests/test_audit.py` (redaction of secret/token/audio keys, required correlation/request/timestamp fields, deterministic JSON, fail-closed) and `tests/test_persistence.py` (idempotent re-upsert, retention-relevant serialized fields, UTC ISO timestamps). Live DynamoDB/S3 transports remain gated on 0.2.
 
 - [ ] **3.4 Replace the seed plan stub only after safety review**
   - Implement a reversible, explicitly sandbox-gated seed/cleanup workflow for 3–5 findings only after IAM and threat-model approval.
@@ -99,30 +104,34 @@
 
 ## Phase 4 — Gateway tools and control plane
 
-- [ ] **4.1 Implement four narrow remediation tools**
+- [x] **4.1 Implement four narrow remediation tools** *(offline handlers; live AWS effector + least-privilege roles gated on 0.2)*
   - Build one bounded tool per approved operation with typed input validation, target allowlisting, safety-tag rechecks, least-privilege role, idempotency, and redacted outcomes.
   - **Exit:** Unit and integration tests cover allow, deny, no-op, failure, audit, and cleanup for each tool.
+  - **Done:** `src/ccg/tools.py` implements all four as pure `ToolHandler`s with server-side safety rechecks, no-op-on-compliant, and a `DryRunEffector` seam (no AWS calls). Access-key rotation is dry-run unless `confirm=true` (approved Q5). Covered by `tests/test_tools.py`. Live mutation via a real `Effector` and least-privilege roles remain gated on 0.2.
 
-- [ ] **4.2 Implement Gateway invocation adapter**
+- [ ] **4.2 Implement Gateway invocation adapter** *(local Cedar-first model + double done; live AgentCore transport gated on 0.2)*
   - Route remediation requests through the AgentCore Gateway MCP boundary only.
   - Capture exact action IDs, decision evidence, policy version, request IDs, and correlation IDs.
   - **Exit:** Direct tool/Lambda invocation is absent from agents, API, console, and voice paths.
+  - **Done:** `src/ccg/authz.py` models forbid-overrides-permit / default-deny ordering as explicit named rules producing full `PolicyDecision` evidence; `InMemoryCedarGateway` delegates to it. `src/ccg/gateway.py` keeps the real AgentCore transport as a seam with no local authorization. Covered by `tests/test_authz.py` and `tests/test_gateway.py`. **Still gated:** exact generated action IDs and the live MCP transport come from 0.2.
 
 - [ ] **4.3 Implement audited policy activation control plane**
   - Authenticate the admin, validate requested version/reason/concurrency, write intent, call the verified AgentCore control-plane update, reconcile effective state, and write result.
   - Fail closed on timeout, stale version, replay, schema error, or uncertain propagation.
   - **Exit:** Activation tests prove the UI cannot grant access and a failed/ambiguous update leaves mutations denied.
 
-- [ ] **4.4 Implement remediation reconciliation**
+- [x] **4.4 Implement remediation reconciliation** *(offline; driven by test doubles until 0.2)*
   - Record requested/running/succeeded/no-op/failed/uncertain outcomes and require discovery confirmation before `RESOLVED`.
   - **Exit:** Findings, audit records, and tool outcomes remain consistent under retries and timeouts.
+  - **Done:** `src/ccg/reconcile.py` (`ReconciliationService`) is the single finding-status authority with an explicit allowed-transition map. Tool outcomes record SUCCEEDED/NOOP/FAILED but never resolve; only a confirming discovery read (drift gone, from a success/no-op state) transitions to `RESOLVED`. Failed/uncertain outcomes stay unresolved. Idempotent, audited, illegal transitions rejected. Wired into `demo.py` (replaces the previous inline RESOLVED hack). Covered by `tests/test_reconcile.py`.
 
 ## Phase 5 — Console, identity, and optional voice
 
-- [ ] **5.1 Implement Cognito/API control plane**
+- [~] **5.1 Implement Cognito/API control plane** *(service + authz contracts done offline; Cognito/API Gateway/Lambda wiring gated on 0.2)*
   - Add authenticated findings, policy-status, decision-evidence, activation, and remediation-request endpoints.
   - Enforce server-side input validation and correlation propagation; do not expose direct AWS mutation endpoints.
   - **Exit:** API authorization tests cover unauthenticated, unauthorized, stale, malformed, and valid requests.
+  - **Done:** `src/ccg/api.py` (`ComplianceApi`) is framework-neutral with no direct AWS mutation path — every mutation is delegated to the Gateway port, and the target is resolved server-side from the stored finding (a command cannot smuggle its own target). `tests/test_api_authorization.py` covers unauthenticated reads/writes, actor mismatch, missing/stale finding version, unresolvable finding, and the valid allow-and-apply path; `tests/test_policy_api_voice.py` covers activation auth, stale generation, and deny-safe failure. **Still gated:** Cognito authentication, the API Gateway/Lambda HTTP adapter, and the decision-evidence read endpoint wiring depend on 0.2.
 
 - [ ] **5.2 Implement Next.js App Router console**
   - Display findings, evidence, effective policy version/mode, proposed actions, and server-confirmed outcomes.
@@ -135,20 +144,22 @@
 
 ## Phase 6 — Validation, CI, demo, and operations
 
-- [ ] **6.1 Build complete test matrix**
+- [~] **6.1 Build complete test matrix** *(offline matrix + traceability done; sandbox e2e gated on 0.2)*
   - Run contract, policy, unit, integration, idempotency, audit, cleanup, and negative authorization tests.
   - Add a sandbox-only end-to-end path for discovery → deny → activation → allow/no-op → rediscovery.
   - **Exit:** Every requirement and acceptance scenario has traceable evidence.
+  - **Done:** 108 offline tests spanning contract/policy/unit/idempotency/audit/negative-authorization plus the `test_demo` end-to-end chain. `docs/TEST_TRACEABILITY.md` maps every CCG-REQ and ACC scenario to its covering test(s) and flags which remain gated on 0.2. **Still gated:** the sandbox-only (real AWS) end-to-end path requires 0.2.
 
 - [ ] **6.2 Extend CI validation**
   - Add pinned Terraform fmt/validate/tflint and provider lock/schema checks; Ruff/pytest; TypeScript ESLint/typecheck; Cedar validation/analyzer checks; and secret scanning.
   - Keep real-cloud integration and remediation opt-in; never apply from CI.
   - **Exit:** Pull-request CI is validation-only and reports artifacts without secrets.
 
-- [ ] **6.3 Add observability and budget checks**
+- [~] **6.3 Add observability and budget checks** *(metric contracts done offline; CloudWatch emission + dashboard gated on 0.2)*
   - Add structured JSON logs, correlation fields, metrics/alarms for discovery, denials, activation, tool failures, voice failures, and cleanup.
   - Add cost/resource guardrails and verify seven-day CloudWatch/30-day S3 retention.
   - **Exit:** Operational dashboard/runbook demonstrates the required evidence and budget posture.
+  - **Done:** `src/ccg/observability.py` defines the stable `Metric` catalog covering every CCG-REQ-037 family (discovery run/partial/failure, gateway allow/deny, activation success/failure/rejected, tool applied/noop/failed, voice session/error, cleanup, audit-write failure) behind a `MetricSink` seam with `NullMetricSink` default and `InMemoryMetricSink` recorder. Dimensions are validated string-only (no secrets/ARNs). Covered by `tests/test_observability.py`. Cost guardrails already live as validated Terraform variable constraints (7-day CW / 30-day S3). **Still gated:** CloudWatch EMF/PutMetricData emission, alarms, and dashboard require 0.2.
 
 - [ ] **6.4 Run the demo rehearsal**
   - Seed 3–5 sandbox-only findings; detect; show denied remediation with inactive permits; activate through the audited control plane; repeat the request; show allow/no-op; rediscover; show evidence; optionally run an interruptible voice briefing.

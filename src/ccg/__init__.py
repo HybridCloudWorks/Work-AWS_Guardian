@@ -3,11 +3,17 @@
 __all__ = [
     "api",
     "audit",
+    "authz",
     "contracts",
+    "demo",
     "discovery",
     "gateway",
+    "observability",
     "policy",
     "ports",
+    "reconcile",
+    "sources",
     "testing",
+    "tools",
     "voice",
 ]

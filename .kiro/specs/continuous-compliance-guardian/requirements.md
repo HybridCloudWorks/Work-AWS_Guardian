@@ -19,7 +19,7 @@ The demo is successful only when it can show all of the following in one traceab
 
 ### 1.1 In scope
 
-- Python 3.12 discovery and remediation services with typed contracts and test doubles.
+- Python 3.14 discovery and remediation services with typed contracts and test doubles.
 - EventBridge scheduling, configurable with a 15-minute POC default.
 - Read-only discovery from AWS Config, Security Hub, and CloudTrail.
 - AgentCore Gateway with MCP tools backed by Lambda targets, subject to live schema validation.

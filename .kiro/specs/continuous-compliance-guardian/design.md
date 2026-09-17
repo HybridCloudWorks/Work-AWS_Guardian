@@ -40,7 +40,7 @@
                    | CloudWatch structured logs    |                 +---------+----------+
                    +-------------------------------+                           |
                                                                                |
-EventBridge schedule --> Discovery Lambda (Python 3.12, read-only)             |
+EventBridge schedule --> Discovery Lambda (Python 3.14, read-only)             |
        |                       |                                                |
        |                       +--> Config / Security Hub / CloudTrail          |
        |                       +--> normalize + deduplicate                      |
@@ -66,7 +66,7 @@ The diagram is logical. The exact AgentCore runtime/client placement, console ho
 
 ### 3.1 Discovery path
 
-- EventBridge invokes a Python 3.12 discovery Lambda at a configurable schedule, defaulting to 15 minutes.
+- EventBridge invokes a Python 3.14 discovery Lambda at a configurable schedule, defaulting to 15 minutes.
 - The discovery role can read only the approved AWS Config, Security Hub, and CloudTrail APIs plus write the finding/audit destinations. It cannot assume the remediation role, call Gateway mutation tools, change resource tags, or alter policy state.
 - Source adapters normalize findings into a stable contract. A deterministic identity is derived from rule ID plus target identity and relevant scope. Source errors remain visible as partial-run evidence.
 - DynamoDB stores current finding state and operational idempotency metadata. S3 stores append-only-shaped JSON audit records with private access, encryption, lifecycle expiration at 30 days, and no credentials or secrets.
@@ -205,7 +205,7 @@ CI remains validation-only: Terraform format/validate/tflint, provider lock/sche
 
 1. **Use AgentCore Policy Engine rather than introducing Verified Permissions for the Gateway decision.** Terraform supports both, but the requirement is an AgentCore Gateway boundary and AgentCore’s native policy engine owns the Gateway tool schema. Verified Permissions remains a possible separate application authorization service only if a later requirement needs it; adding it now would create a second policy boundary.
 2. **Use Lambda-backed Gateway targets for the four POC tools.** This matches the documented target capability and serverless cost constraint. OpenAPI/Smithy/MCP-server targets are not needed for the first implementation.
-3. **Use Lambda for scheduled discovery unless an AgentCore Runtime requirement is proven.** The handoff requires a Python 3.12 Strands-compatible agent, not an always-on runtime. AgentCore Runtime is a validated provider resource but is not required by the discovery flow and would add an integration gate.
+3. **Use Lambda for scheduled discovery unless an AgentCore Runtime requirement is proven.** The handoff requires a Python 3.14 Strands-compatible agent, not an always-on runtime. AgentCore Runtime is a validated provider resource but is not required by the discovery flow and would add an integration gate.
 4. **Keep Nova Sonic optional and read-only.** The streaming and interruption capabilities are validated, but browser transport, model/region, quotas, and tool exposure remain unverified.
 5. **Treat AWS provider 6.64.0 as the initial design baseline, not an automatic upgrade.** The repository’s current provider constraint must be changed only through a reviewed compatibility/lock-file task.
 

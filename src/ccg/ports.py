@@ -33,6 +33,10 @@ class DiscoverySource(Protocol):
 
 
 class FindingRepository(Protocol):
+    def get(self, finding_id: str) -> Finding | None:
+        """Return the current stored finding, or None if it has never been seen."""
+        ...
+
     def upsert(self, finding: Finding) -> None:
         ...
 
