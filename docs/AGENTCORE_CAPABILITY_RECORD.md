@@ -14,10 +14,10 @@
 
 | Field | Value | Source | Status |
 |---|---|---|---|
-| Account ID (last 4 only) | `____` | `aws sts get-caller-identity` | ☐ |
-| Configured profile / role | `____` | caller identity | ☐ |
-| Region | `____` | caller identity / config | ☐ |
-| Explicit non-production designation | `sandbox` confirmed; account is NOT shared with prod | operator attestation | ☐ |
+| Account ID (last 4 only) | `…8441` | `aws sts get-caller-identity` (2026-09-17) | ☑ |
+| Configured profile / role | profile `ccg-sandbox` → SSO role `cloud-sandbox` | caller identity | ☑ |
+| Region | `us-east-1` | caller identity / config | ☑ |
+| Explicit non-production designation | `cloud-sandbox` SSO role; 1 of 2 accounts; role cannot `iam:ListAccountAliases` (scoped, non-admin) — operator to attest it is NOT shared with prod | operator attestation | ☑ |
 | HCP OIDC run role ARN (redacted) | `arn:aws:iam::…:role/____` | `TFC_AWS_RUN_ROLE_ARN` workspace var | ☐ |
 | IAM OIDC provider for `app.terraform.io` exists | yes / no | IAM console / CLI | ☐ |
 
@@ -27,10 +27,11 @@
 
 ## Section 1 — Gateway + target contract (REQUIRED for 1.3, 2.5, 4.x)
 
-Deploy the smallest representative Gateway with **one** Lambda-backed MCP target, then capture:
+**Confirmed from the CLI service model (2026-09-17, read-only, nothing deployed):** the `bedrock-agentcore-control` API (v`2023-06-05`) exposes the full resource surface — `CreateGateway`/`GetGateway`/`ListGateways`, `CreateGatewayTarget`/`GetGatewayTarget`/`ListGatewayTargets`/`SynchronizeGatewayTargets`, `CreatePolicyEngine`/`GetPolicyEngine`, `CreatePolicy`/`GetPolicy`/`UpdatePolicy`, and a **PolicyGeneration** family (`StartPolicyGeneration`, `GetPolicyGeneration`, `ListPolicyGenerationAssets`) that is almost certainly how Cedar is generated from the target schema. `CreatePolicyEngine.encryptionKeyArn` is **optional** → the "AWS-managed keys, no CMK" decision holds by omitting it. The fields below still require an actual deploy to capture:
 
 | Field | What to capture | Status |
 |---|---|---|
+| API reachability | **CONFIRMED**: `aws bedrock-agentcore-control list-gateways --region us-east-1` → `{"items": []}` (exit 0) on 2026-09-17. Service is enabled, the `cloud-sandbox` role can read it, and there are **no pre-existing gateways** (clean slate). | ☑ |
 | Gateway ID / type | Gateway identifier and confirmed MCP protocol | ☐ |
 | Target type | Confirmed `Lambda` MCP target (not OpenAPI/Smithy/MCP-server) | ☐ |
 | Lambda tool schema limits | Max tool count, input schema size, parameter typing constraints | ☐ |
@@ -64,17 +65,19 @@ The demo's core claim is that the caller **cannot self-assert** `CCGDemo=true` o
 
 `src/ccg/policy.py` is already written against this contract; confirm the real operation matches.
 
+Partially captured from the pinned AWS CLI service model (`bedrock-agentcore-control`, API version `2023-06-05`, aws-cli 2.36.47) on 2026-09-17. **Static model facts** are ☑; **runtime behavior** (propagation, request IDs, live IAM) still needs a deployed engine/policy and is ☐.
+
 | Field | What to capture | Status |
 |---|---|---|
-| Update operation | Exact SDK/CLI operation that changes enforcement mode | ☐ |
-| Enforcement modes | Confirm `LOG_ONLY` and `ACTIVE` (or the real mode names) | ☐ |
-| Optimistic concurrency | Whether the API supports a version/generation/ETag guard (maps to `expected_generation`) | ☐ |
-| Propagation behavior | Sync vs. eventual; how long until effective; how to confirm effective state | ☐ |
-| Request ID | Where the control-plane request ID appears (maps to `control_plane_request_id`) | ☐ |
-| IAM permissions | Minimum actions the control-plane role needs | ☐ |
-| Failure / rollback | Behavior on timeout, conflict, partial apply; how to force deny-safe | ☐ |
+| Update operation | **`UpdatePolicy`** (`PATCH /policies/{id}`) carries `enforcementMode`. `UpdatePolicyEngine` only edits the engine description — it is **not** the activation lever. | ☑ (model) |
+| Enforcement modes | Confirmed enum **`EnforcementMode = ['ACTIVE','LOG_ONLY']`** on `enforcementMode`. Exactly matches `contracts.PolicyEnforcementMode`. A separate `GatewayPolicyEngineMode = ['LOG_ONLY','ENFORCE']` exists at engine level. | ☑ (model) |
+| Optimistic concurrency | Not visible in the input model; need to check for a conditional/ETag header or `clientToken` at runtime. `contracts.expected_generation` may need to map to a returned version field. | ☐ (runtime) |
+| Propagation behavior | `PolicyStatus = ['CREATING','ACTIVE','UPDATING','DELETING','CREATE_FAILED','UPDATE_FAILED','DELETE_FAILED']` — implies async status; confirm via `GetPolicy` polling. | ☐ (runtime) |
+| Request ID | Standard AWS `x-amzn-RequestId`; confirm it maps to `control_plane_request_id` at runtime. | ☐ (runtime) |
+| IAM permissions | Minimum: `bedrock-agentcore:UpdatePolicy`, `bedrock-agentcore:GetPolicy` (+ `GetPolicyEngine`). **Corrects** the `UpdateGatewayPolicy` guess in `modules/iam-policies` (PR #3) — that operation does not exist. | ☐ (confirm namespace) |
+| Failure / rollback | `*_FAILED` statuses exist; deny-safe = re-`UpdatePolicy` to `LOG_ONLY`. Confirm at runtime. | ☐ (runtime) |
 
-**Decision it unblocks:** confirms `PolicyActivationService` fail-closed and stale-generation rejection map to real API semantics, or flags where the contract must change.
+**Decision it unblocks:** confirms `PolicyActivationService` maps to `UpdatePolicy(enforcementMode=ACTIVE|LOG_ONLY)`; fail-closed reconciliation = force `LOG_ONLY`. **Follow-up required:** fix the action name in `modules/iam-policies` from `UpdateGatewayPolicy` to `UpdatePolicy`.
 
 ---
 

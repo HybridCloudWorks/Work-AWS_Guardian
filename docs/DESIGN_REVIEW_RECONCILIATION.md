@@ -55,6 +55,7 @@
 ## Cross-cutting decisions already settled since the spec was written
 - **Python runtime baseline is 3.14** (was 3.12): `pyproject.toml` `>=3.14,<3.15`, `ruff.toml` `py314`, CI `python-version: 3.14`, `ruff==0.16.6`. 22-test suite passes. All spec, steering, and handoff references were updated from 3.12 to 3.14 in the same change.
 - **AWS provider pinned to 6.64.0**; OIDC dynamic credentials via HCP (`TFC_AWS_PROVIDER_AUTH` / `TFC_AWS_RUN_ROLE_ARN`), no static credentials in repo.
+- **Encryption keys: AWS-managed keys only, no customer-managed KMS (CMK)** (owner-approved 2026-09-17). S3 audit bucket keeps SSE-S3 (AES256); DynamoDB keeps its AWS-owned-key SSE; CloudWatch keeps default encryption. This holds POC cost/complexity down; CMK is deferred to the production-later list. Any future control that would require a CMK must be flagged as a budget/scope change.
 
 ## Open items — RESOLVED (owner-approved 2026-09-15)
 
