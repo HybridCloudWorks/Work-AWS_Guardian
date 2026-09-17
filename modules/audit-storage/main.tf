@@ -60,7 +60,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit" {
   }
 }
 
-data "aws_iam_policy_document" "secure_transport" {
+data "aws_iam_policy_document" "bucket" {
+  # Encryption in transit: reject any request not using TLS.
   statement {
     sid    = "DenyInsecureTransport"
     effect = "Deny"
@@ -79,9 +80,32 @@ data "aws_iam_policy_document" "secure_transport" {
       values   = ["false"]
     }
   }
+
+  # Encryption at rest: reject uploads that omit a server-side-encryption
+  # header. Complements the bucket default SSE so a write cannot bypass
+  # encryption. The canonical AWS pattern denies when the header is absent
+  # (Null = true).
+  statement {
+    sid    = "DenyUnencryptedObjectUploads"
+    effect = "Deny"
+
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.audit.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Null"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["true"]
+    }
+  }
 }
 
-resource "aws_s3_bucket_policy" "secure_transport" {
+resource "aws_s3_bucket_policy" "audit" {
   bucket = aws_s3_bucket.audit.id
-  policy = data.aws_iam_policy_document.secure_transport.json
+  policy = data.aws_iam_policy_document.bucket.json
 }
