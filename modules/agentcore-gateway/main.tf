@@ -20,21 +20,23 @@ resource "aws_iam_role_policy" "gateway_execution" {
 
 # --- Feature-flagged Gateway (count = 0 by default → not deployed) ------------
 #
-# NOTE: argument names below follow the AgentCore CreateGateway API contract
-# (name, protocolType=MCP, roleArn, authorizerType=AWS_IAM for the POC, optional
-# policyEngineConfiguration). The EXACT Terraform provider (aws 6.64.0) argument
-# spellings must be confirmed against the real `terraform plan` in HCP before
-# enable_gateway is set true — do not assume these are provider-correct yet.
-# They are intentionally inert while count = 0.
+# Argument names verified against the hashicorp/aws 6.64.0 provider schema
+# (`terraform providers schema -json`): authorizer_type/name/role_arn are
+# required; protocol_type is optional. For AWS_IAM authorization the
+# authorizer_configuration block is omitted entirely (that block only models
+# custom_jwt_authorizer). policy_engine_configuration is wired in a later change
+# once a policy engine exists; keeping it out here means the Gateway defaults to
+# no active permit path, consistent with the fail-closed posture.
 #
-# resource "aws_bedrockagentcore_gateway" "this" {
-#   count             = var.enable_gateway ? 1 : 0
-#   name              = "${var.name_prefix}-gateway"
-#   protocol_type     = "MCP"
-#   role_arn          = aws_iam_role.gateway_execution.arn
-#   authorizer_type   = "AWS_IAM"
-#   # policy_engine_configuration { mode = "LOG_ONLY"  arn = ... }  # permits inactive
-# }
-#
-# Kept commented until the argument names are HCP-plan-verified, so this module
-# is valid and deployable (role only) today with zero AgentCore footprint.
+# Still gated: this resource only materializes when enable_gateway = true, which
+# must go through a reviewed HCP plan per docs/THREAT_MODEL.md (CCGDemo-tagged,
+# permits inactive). Deploying the Gateway is a real AWS mutation.
+resource "aws_bedrockagentcore_gateway" "this" {
+  count = var.enable_gateway ? 1 : 0
+
+  name            = "${var.name_prefix}-gateway"
+  role_arn        = aws_iam_role.gateway_execution.arn
+  protocol_type   = "MCP"
+  authorizer_type = "AWS_IAM"
+  description     = "CCG POC schema-capture gateway (permits inactive)"
+}
