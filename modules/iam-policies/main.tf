@@ -197,18 +197,31 @@ data "aws_iam_policy_document" "tool_execution_boundary" {
 # --- Control-plane role: policy activation only -------------------------------
 
 data "aws_iam_policy_document" "control_plane" {
-  # Activation of the AgentCore policy enforcement mode only. The exact action
-  # IDs are confirmed at gate 0.2; these are the documented Bedrock AgentCore
-  # policy control-plane operations and carry no remediation permissions.
+  # Activation of the AgentCore policy enforcement mode only. Actions verified
+  # against the bedrock-agentcore-control service model (API 2023-06-05) during
+  # gate-0.2 capture: activation is UpdatePolicy(enforcementMode=ACTIVE|LOG_ONLY)
+  # on a Policy resource; GetPolicy/GetPolicyEngine support reconciliation. The
+  # earlier UpdateGatewayPolicy/GetGatewayPolicy/ListGatewayPolicies names do
+  # not exist in the API. Carries no remediation permissions.
   statement {
     sid    = "PolicyActivation"
     effect = "Allow"
     actions = [
-      "bedrock-agentcore:UpdateGatewayPolicy",
-      "bedrock-agentcore:GetGatewayPolicy",
-      "bedrock-agentcore:ListGatewayPolicies",
+      "bedrock-agentcore:UpdatePolicy",
+      "bedrock-agentcore:GetPolicy",
+      "bedrock-agentcore:GetPolicySummary",
+      "bedrock-agentcore:ListPolicySummaries",
     ]
-    resources = ["arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:gateway/*"]
+    resources = ["arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:policy/*"]
+  }
+
+  statement {
+    sid    = "PolicyEngineRead"
+    effect = "Allow"
+    actions = [
+      "bedrock-agentcore:GetPolicyEngine",
+    ]
+    resources = ["arn:aws:bedrock-agentcore:${var.region}:${var.account_id}:policy-engine/*"]
   }
 
   statement {
