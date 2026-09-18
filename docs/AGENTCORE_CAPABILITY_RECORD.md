@@ -87,8 +87,8 @@ Voice stays **off by default** regardless. Capture only enough to decide real-ad
 
 | Field | What to capture | Status |
 |---|---|---|
-| Model ID | Selected Nova Sonic model identifier | ☐ |
-| Region availability | Confirm model is available in the sandbox region | ☐ |
+| Model ID | **`amazon.nova-2-sonic-v1:0`** confirmed present via `bedrock list-foundation-models` (2026-09-18). | ☑ |
+| Region availability | **Available in `us-east-1`** (the sandbox region). See `docs/CLOUD_INVENTORY.md`. | ☑ |
 | Quotas | Session/stream/concurrency limits | ☐ |
 | Bidirectional API | Event types for speech/text/audio | ☐ |
 | Browser transport | The supported browser streaming path + auth | ☐ |
