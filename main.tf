@@ -43,3 +43,14 @@ module "iam_policies" {
   findings_table_arn = module.findings_store.table_arn
   log_group_arn      = module.observability.log_group_arn
 }
+
+# AgentCore Gateway execution role (always created) + feature-flagged Gateway
+# skeleton (default off; no Gateway deployed until a reviewed HCP plan enables it).
+module "agentcore_gateway" {
+  source = "./modules/agentcore-gateway"
+
+  name_prefix             = var.name_prefix
+  assume_role_policy_json = module.iam_policies.gateway_assume_role_policy_json
+  execution_policy_json   = module.iam_policies.gateway_execution_policy_json
+  enable_gateway          = var.enable_agentcore_gateway
+}

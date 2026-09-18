@@ -262,3 +262,46 @@ data "aws_iam_policy_document" "audit_reader" {
     resources = [var.audit_bucket_arn, "${var.audit_bucket_arn}/*"]
   }
 }
+
+# --- AgentCore Gateway execution role -----------------------------------------
+# The Gateway assumes this role to invoke the registered Lambda tool targets.
+# It grants ONLY lambda:InvokeFunction on the CCG tool functions (by name
+# prefix) plus its own log writes. It performs no AWS mutation itself — the tool
+# Lambdas do, under their own tool-execution role.
+
+data "aws_iam_policy_document" "gateway_assume_role" {
+  statement {
+    sid     = "AgentCoreAssume"
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["bedrock-agentcore.amazonaws.com"]
+    }
+
+    # Confused-deputy protection (threat T1): only this account's AgentCore can
+    # assume the role.
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [var.account_id]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "gateway_execution" {
+  statement {
+    sid       = "InvokeToolTargets"
+    effect    = "Allow"
+    actions   = ["lambda:InvokeFunction"]
+    resources = ["arn:aws:lambda:${var.region}:${var.account_id}:function:${var.name_prefix}-tool-*"]
+  }
+
+  statement {
+    sid       = "WriteLogs"
+    effect    = "Allow"
+    actions   = local.log_write_actions
+    resources = ["${var.log_group_arn}:*"]
+  }
+}
