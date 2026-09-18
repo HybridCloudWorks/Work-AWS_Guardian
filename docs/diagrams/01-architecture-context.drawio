@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net" version="24.7.0">
+  <diagram id="ctx" name="Architecture Context">
+    <mxGraphModel dx="1100" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Continuous Compliance Guardian — Architecture Context (POC, nothing deployed)" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1080" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="admin" value="POC Admin&#10;(human)" style="shape=umlActor;html=1;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="console" value="Next.js Console&#10;(static export, S3+CloudFront)&#10;⚠ wired to nothing yet" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="160" y="120" width="180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="cognito" value="Cognito&#10;(POC auth) — gated 0.2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="230" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="api" value="ComplianceApi (Lambda/API GW)&#10;• server-side target resolution ✔&#10;• role checks ✔&#10;• ⚠ tool/params not validated (M2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="400" y="110" width="240" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw" value="AgentCore Gateway + Cedar Policy Engine&#10;(MCP, AWS_IAM)&#10;🔴 deployed mode = LOG_ONLY = NON-ENFORCING (C1)&#10;🔴 prod client is pass-through (C2)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="690" y="105" width="300" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tools" value="4 Lambda tool targets&#10;SG correction · S3 encryption · tagging · key rotation (dry-run)&#10;defense-in-depth safety recheck ✔" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="690" y="250" width="300" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="disc" value="Discovery Lambda (Python 3.14, read-only)&#10;EventBridge 15-min schedule" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sources" value="AWS Config · Security Hub · CloudTrail&#10;(read-only sources)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="60" y="480" width="280" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ddb" value="DynamoDB findings&#10;(on-demand, PITR)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="400" y="380" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="S3 audit (private,&#10;SSE, TLS, 30d)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="580" y="380" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="cw" value="CloudWatch logs (7d)&#10;⚠ metrics catalog is dead code (H2)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="760" y="380" width="180" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cp" value="PolicyActivationService (control plane)&#10;UpdatePolicy(mode) · audited · fail-safe&#10;⚠ Protocol missing update_policy_set (H4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="400" y="250" width="240" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="voice" value="Nova Sonic voice adapter&#10;(amazon.nova-2-sonic-v1:0, off by default)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="120" width="140" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell e1="1" style="endArrow=block;html=1;" edge="1" parent="1" source="admin" target="console"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e2="1" style="endArrow=block;html=1;" edge="1" parent="1" source="console" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e3="1" value="mutation request" style="endArrow=block;html=1;" edge="1" parent="1" source="api" target="gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e4="1" value="activation" style="endArrow=block;html=1;dashed=1;" edge="1" parent="1" source="api" target="cp"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e5="1" value="invoke (after allow)" style="endArrow=block;html=1;" edge="1" parent="1" source="gw" target="tools"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e6="1" style="endArrow=block;html=1;" edge="1" parent="1" source="disc" target="sources"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e7="1" value="upsert" style="endArrow=block;html=1;" edge="1" parent="1" source="disc" target="ddb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e8="1" value="audit" style="endArrow=block;html=1;" edge="1" parent="1" source="disc" target="s3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e9="1" value="UpdatePolicy" style="endArrow=block;html=1;dashed=1;" edge="1" parent="1" source="cp" target="gw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell e10="1" style="endArrow=block;html=1;dashed=1;" edge="1" parent="1" source="voice" target="api"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <mxCell id="legend" value="Legend:  green = implemented (offline model)   orange = gated / deploy-time   grey/dashed = not built / off   red = review defect" style="text;html=1;align=left;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="600" width="1000" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
