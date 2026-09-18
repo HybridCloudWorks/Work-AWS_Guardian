@@ -36,10 +36,11 @@
   - Include schema versions, correlation/request IDs, deterministic identities, redaction rules, idempotency keys, expected finding versions, and allowed status transitions.
   - **Exit:** Contracts are reviewable independently of implementation and cover every acceptance scenario.
 
-- [ ] **1.2 Threat-model the trust boundaries**
+- [x] **1.2 Threat-model the trust boundaries**
   - Model admin, Cognito, API, discovery, AgentCore Gateway, Cedar, tool Lambdas, AWS sources, S3/DynamoDB, and Nova Sonic.
   - Identify confused-deputy, forged-tag/context, replay, privilege escalation, secret leakage, policy activation, and audit-integrity threats.
   - **Exit:** Mitigations map to requirements, IAM boundaries, tests, and operational alarms.
+  - **Done:** `docs/THREAT_MODEL.md` models boundaries B1–B7 and threats T1–T8, each traced to a mitigation, EARS requirement, IAM/Cedar boundary, test, and `Metric` alarm. Grounded in verified gate-0.2 facts (real `UpdatePolicy` activation, `cloud-sandbox` non-admin scope, empty account, `aws-nuke` auto-clean). One HIGH residual (T2: live Cedar context source) is itself a gate-0.2 §2 capture item. Sets the reviewed deploy gate: a minimal schema-capture deploy is acceptable only against `CCGDemo`-tagged targets with permits inactive (`LOG_ONLY`) via a reviewed HCP plan.
 
 - [ ] **1.3 Reconcile Cedar policies with the live schema**
   - Convert current guardrail/permit intent into explicit per-tool policies using actual AgentCore action/resource/entity names.
@@ -127,7 +128,7 @@
 
 ## Phase 5 — Console, identity, and optional voice
 
-- [~] **5.1 Implement Cognito/API control plane** *(service + authz contracts done offline; Cognito/API Gateway/Lambda wiring gated on 0.2)*
+- [ ] **5.1 Implement Cognito/API control plane** *(service + authz contracts done offline; Cognito/API Gateway/Lambda wiring gated on 0.2)*
   - Add authenticated findings, policy-status, decision-evidence, activation, and remediation-request endpoints.
   - Enforce server-side input validation and correlation propagation; do not expose direct AWS mutation endpoints.
   - **Exit:** API authorization tests cover unauthenticated, unauthorized, stale, malformed, and valid requests.
@@ -144,7 +145,7 @@
 
 ## Phase 6 — Validation, CI, demo, and operations
 
-- [~] **6.1 Build complete test matrix** *(offline matrix + traceability done; sandbox e2e gated on 0.2)*
+- [ ] **6.1 Build complete test matrix** *(offline matrix + traceability done; sandbox e2e gated on 0.2)*
   - Run contract, policy, unit, integration, idempotency, audit, cleanup, and negative authorization tests.
   - Add a sandbox-only end-to-end path for discovery → deny → activation → allow/no-op → rediscovery.
   - **Exit:** Every requirement and acceptance scenario has traceable evidence.
@@ -155,7 +156,7 @@
   - Keep real-cloud integration and remediation opt-in; never apply from CI.
   - **Exit:** Pull-request CI is validation-only and reports artifacts without secrets.
 
-- [~] **6.3 Add observability and budget checks** *(metric contracts done offline; CloudWatch emission + dashboard gated on 0.2)*
+- [ ] **6.3 Add observability and budget checks** *(metric contracts done offline; CloudWatch emission + dashboard gated on 0.2)*
   - Add structured JSON logs, correlation fields, metrics/alarms for discovery, denials, activation, tool failures, voice failures, and cleanup.
   - Add cost/resource guardrails and verify seven-day CloudWatch/30-day S3 retention.
   - **Exit:** Operational dashboard/runbook demonstrates the required evidence and budget posture.
