@@ -47,3 +47,9 @@ variable "log_retention_days" {
     error_message = "The POC log retention requirement is exactly 7 days."
   }
 }
+
+variable "enable_agentcore_gateway" {
+  description = "Feature flag for the AgentCore Gateway. Default false: only the Gateway execution role is created, no live Gateway. Set true ONLY with a reviewed HCP plan approved for the minimal schema-capture deploy (docs/THREAT_MODEL.md gate)."
+  type        = bool
+  default     = false
+}

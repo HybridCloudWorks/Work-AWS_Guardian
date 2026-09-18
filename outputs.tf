@@ -37,3 +37,8 @@ output "audit_reader_role_policy_json" {
   description = "Read-only policy document for the audit-reader role."
   value       = module.iam_policies.audit_reader_policy_json
 }
+
+output "agentcore_gateway_execution_role_arn" {
+  description = "ARN of the AgentCore Gateway execution role (used as the Gateway roleArn when the Gateway is enabled)."
+  value       = module.agentcore_gateway.gateway_execution_role_arn
+}
