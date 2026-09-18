@@ -42,3 +42,8 @@ output "agentcore_gateway_execution_role_arn" {
   description = "ARN of the AgentCore Gateway execution role (used as the Gateway roleArn when the Gateway is enabled)."
   value       = module.agentcore_gateway.gateway_execution_role_arn
 }
+
+output "agentcore_gateway_arn" {
+  description = "ARN of the AgentCore Gateway (null until enable_agentcore_gateway = true)."
+  value       = module.agentcore_gateway.gateway_arn
+}
