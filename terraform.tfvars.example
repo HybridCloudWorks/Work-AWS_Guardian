@@ -1,5 +1,12 @@
-aws_region           = "us-east-1"
-name_prefix          = "ccg-poc"
-environment          = "sandbox"
+aws_region            = "us-east-1"
+name_prefix           = "ccg-poc"
+environment           = "sandbox"
 audit_expiration_days = 30
 log_retention_days    = 7
+
+# AgentCore Gateway feature flag. Leave false for all normal runs.
+# Set true ONLY for the reviewed HCP schema-capture apply (see
+# docs/DEPLOY_RUNBOOK.md). When true, Terraform creates the Gateway execution
+# role, the Gateway (protocol MCP, AWS_IAM auth), and the Policy Engine bound in
+# LOG_ONLY mode (permits inactive / fail-closed).
+enable_agentcore_gateway = false
