@@ -1,9 +1,9 @@
 # Cloud Inventory — Sandbox Account
 
 **Captured:** 2026-09-18 (read-only probes; nothing was created or modified)
-**Account:** `936361168441` (masked `…8441`)
+**Account:** `<SANDBOX_ACCOUNT_ID>` (redacted; a dedicated non-production sandbox account)
 **Region:** `us-east-1`
-**Identity:** SSO role `cloud-sandbox` (`AWSReservedSSO_cloud-sandbox_...`), user `saul.patino@cbts.com`
+**Identity:** SSO role `cloud-sandbox` (`AWSReservedSSO_cloud-sandbox_...`), operated by the sandbox SSO operator
 **Profile:** `ccg-sandbox`
 
 All values below come from read-only AWS API calls (`list-*`, `describe-*`, `get-caller-identity`). No mutation was performed. The `cloud-sandbox` role is intentionally scoped — some account-level IAM reads are denied, which is expected and noted.
@@ -16,7 +16,7 @@ All values below come from read-only AWS API calls (`list-*`, `describe-*`, `get
 | **AgentCore policy engines** | `bedrock-agentcore-control list-policy-engines` | `{ policyEngines: [] }` | No policy engine yet. |
 | **DynamoDB tables** | `dynamodb list-tables` | `[]` | The `ccg-poc-drift` findings table is **not deployed**. |
 | **CloudWatch log groups** (`/ccg`) | `logs describe-log-groups --log-group-name-prefix /ccg` | `[]` | The `/ccg/...` log group is **not deployed**. |
-| **S3 buckets** | `s3api list-buckets` | `elasticbeanstalk-us-east-2-936361168441` (unrelated) | The `ccg-poc-audit-*` bucket is **not deployed**. The one existing bucket is a stray Elastic Beanstalk bucket in us-east-2, unrelated to CCG. |
+| **S3 buckets** | `s3api list-buckets` | `elasticbeanstalk-us-east-2-<SANDBOX_ACCOUNT_ID>` (unrelated) | The `ccg-poc-audit-*` bucket is **not deployed**. The one existing bucket is a stray Elastic Beanstalk bucket in us-east-2, unrelated to CCG. |
 | **Lambda functions** | `lambda list-functions` | `aws-nuke` (unrelated) | No CCG functions. `aws-nuke` suggests this sandbox is periodically wiped by a cleanup tool — relevant to teardown planning. |
 | **Bedrock foundation models** | `bedrock list-foundation-models` | 115 models available | Bedrock is enabled and readable. |
 | **Nova Sonic** | filter `nova` model IDs | **`amazon.nova-2-sonic-v1:0` present** (also nova-pro/lite/micro/canvas/reel) | Fills capability-record §4: the voice model **is available** in us-east-1. Voice stays off-by-default regardless. |
