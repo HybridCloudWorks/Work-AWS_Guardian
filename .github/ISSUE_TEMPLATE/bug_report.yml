@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a defect in the CCG offline model, Terraform, console, or docs.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, AWS account IDs, internal hostnames, or real audit data. This is a public repository.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands and context (e.g. `PYTHONPATH=src python -m pytest ...`, `terraform validate`, `npm test`).
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Python domain model (src/ccg)
+        - Terraform (modules / root)
+        - Cedar policies
+        - Console (Next.js)
+        - CI / workflows
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Python/Node/Terraform versions as relevant. No secrets.

@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose an enhancement consistent with the Cedar-first, cost-bounded POC scope.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What gap or need does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the enhancement. Note any impact on the Cedar-first safety boundary or the <$150/month cost constraint.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
