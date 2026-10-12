@@ -12,6 +12,7 @@ __all__ = [
     "policy",
     "ports",
     "reconcile",
+    "seed",
     "sources",
     "testing",
     "tools",

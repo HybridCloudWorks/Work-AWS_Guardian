@@ -7,26 +7,27 @@ Gateway schema and policy engine are available.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
-from dataclasses import replace
-from datetime import datetime, timezone
-from uuid import uuid4
+from collections.abc import Iterable
 
 from .authz import decide
 from .contracts import (
     AuditEvent,
-    Decision,
+    DecisionEvidence,
     Finding,
     InvocationResult,
     PolicyDecision,
     RemediationRequest,
     TargetRef,
-    ToolOutcome,
-    ToolResult,
 )
-from .ports import AuditSink, DiscoverySource, FindingRepository, GatewayInvocationPort
-
-ToolHandler = Callable[[RemediationRequest], ToolResult]
+from .gateway_core import GatewayInvocationSkeleton, ToolHandler
+from .observability import MetricSink
+from .ports import (
+    AuditSink,
+    DecisionEvidenceRepository,
+    DiscoverySource,
+    FindingRepository,
+    GatewayInvocationPort,
+)
 
 
 class RecordingAuditSink(AuditSink):
@@ -58,6 +59,33 @@ class InMemoryFindingRepository(FindingRepository):
         return list(self.findings.values())
 
 
+class InMemoryDecisionEvidenceRepository(DecisionEvidenceRepository):
+    """In-memory decision-evidence store indexed by request_id and finding_id.
+
+    The ``finding_id`` is not a field on :class:`DecisionEvidence` (that record
+    mirrors the Gateway's view, which is target-centric), so callers that know
+    the finding supply it at record time. Both indexes are append-only; the API
+    read path never mutates stored evidence.
+    """
+
+    def __init__(self) -> None:
+        self._by_request: dict[str, list[DecisionEvidence]] = {}
+        self._by_finding: dict[str, list[DecisionEvidence]] = {}
+        self.records: list[DecisionEvidence] = []
+
+    def record(self, evidence: DecisionEvidence, finding_id: str | None = None) -> None:
+        self.records.append(evidence)
+        self._by_request.setdefault(evidence.request_id, []).append(evidence)
+        if finding_id:
+            self._by_finding.setdefault(finding_id, []).append(evidence)
+
+    def by_request_id(self, request_id: str) -> list[DecisionEvidence]:
+        return list(self._by_request.get(request_id, ()))
+
+    def by_finding_id(self, finding_id: str) -> list[DecisionEvidence]:
+        return list(self._by_finding.get(finding_id, ()))
+
+
 class StaticDiscoverySource(DiscoverySource):
     def __init__(self, name: str, signals: Iterable) -> None:
         self.name = name
@@ -77,79 +105,35 @@ class FailingDiscoverySource(DiscoverySource):
 
 
 class InMemoryCedarGateway(GatewayInvocationPort):
-    """Minimal test-only model of the external Gateway/Cedar boundary."""
+    """Minimal test-only model of the external Gateway/Cedar boundary.
 
-    def __init__(self, audit_sink: AuditSink, *, permit_active: bool = False) -> None:
-        self._audit_sink = audit_sink
+    The double shares the exact evidence/audit/idempotency/ordering flow with
+    the production client via :class:`~ccg.gateway_core.GatewayInvocationSkeleton`;
+    only the *decision source* differs. The double decides locally through the
+    shared :mod:`ccg.authz` model (it is a faithful stand-in for the remote
+    engine), whereas the production client defers to the transport.
+    """
+
+    def __init__(
+        self,
+        audit_sink: AuditSink,
+        *,
+        permit_active: bool = False,
+        metrics: MetricSink | None = None,
+    ) -> None:
+        self._skeleton = GatewayInvocationSkeleton(audit_sink, metrics)
         self._permit_active = permit_active
         self._policy_version = "permits-inactive"
-        self._tools: dict[str, ToolHandler] = {}
-        self._replays: dict[str, ToolResult] = {}
 
     def register(self, tool: str, handler: ToolHandler) -> None:
-        self._tools[tool] = handler
+        self._skeleton.register(tool, handler)
 
     def activate_permits(self, version: str) -> None:
         self._permit_active = True
         self._policy_version = version
 
     def invoke(self, request: RemediationRequest) -> InvocationResult:
-        decision = self._evaluate(request)
-        self._audit_sink.record(
-            AuditEvent(
-                event_id=str(uuid4()),
-                event_type="gateway.decision",
-                actor=request.actor,
-                request_id=request.request_id,
-                correlation_id=request.correlation_id,
-                outcome=decision.decision.value,
-                occurred_at=decision.evaluated_at,
-                details={
-                    "action_id": request.tool,
-                    "target_arn": request.target.arn,
-                    "matched_policy_ids": list(decision.matched_policy_ids),
-                    "policy_set_version": decision.policy_set_version,
-                    "reason": decision.reason,
-                },
-            )
-        )
-        if decision.decision is Decision.DENY:
-            return InvocationResult(decision=decision)
-
-        if request.idempotency_key in self._replays:
-            replay = replace(self._replays[request.idempotency_key], idempotency_replayed=True)
-            return InvocationResult(decision=decision, tool_result=replay)
-
-        try:
-            result = self._tools[request.tool](request)
-        except Exception:  # noqa: BLE001 - boundary converts tool failures to typed outcomes.
-            result = ToolResult(
-                outcome=ToolOutcome.FAILED,
-                tool=request.tool,
-                target_arn=request.target.arn,
-                changed=False,
-                message="tool execution failed",
-                details={"error_type": "tool_failure"},
-            )
-        self._replays[request.idempotency_key] = result
-        self._audit_sink.record(
-            AuditEvent(
-                event_id=str(uuid4()),
-                event_type="remediation.execution",
-                actor=request.actor,
-                request_id=request.request_id,
-                correlation_id=request.correlation_id,
-                outcome=result.outcome.value,
-                occurred_at=datetime.now(timezone.utc),
-                details={
-                    "tool": result.tool,
-                    "target_arn": result.target_arn,
-                    "changed": result.changed,
-                    "idempotency_replayed": result.idempotency_replayed,
-                },
-            )
-        )
-        return InvocationResult(decision=decision, tool_result=result)
+        return self._skeleton.run(request, self._evaluate)
 
     def _evaluate(self, request: RemediationRequest) -> PolicyDecision:
         # Delegate to the shared authz engine so the double enforces exactly the
@@ -157,6 +141,6 @@ class InMemoryCedarGateway(GatewayInvocationPort):
         return decide(
             request,
             permit_active=self._permit_active,
-            registered_tools=frozenset(self._tools),
+            registered_tools=self._skeleton.registered_tools,
             policy_set_version=self._policy_version,
         )
