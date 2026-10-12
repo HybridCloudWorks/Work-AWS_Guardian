@@ -1,9 +1,9 @@
 # Cloud Inventory — Sandbox Account
 
 **Captured:** 2026-09-18 (read-only probes; nothing was created or modified)
-**Account:** `<SANDBOX_ACCOUNT_ID>` (masked `…8441`)
+**Account:** `<SANDBOX_ACCOUNT_ID>` (redacted; a dedicated non-production sandbox account)
 **Region:** `us-east-1`
-**Identity:** SSO role `cloud-sandbox` (`AWSReservedSSO_cloud-sandbox_...`), user `sandbox-sso-operator`
+**Identity:** SSO role `cloud-sandbox` (`AWSReservedSSO_cloud-sandbox_...`), operated by the sandbox SSO operator
 **Profile:** `ccg-sandbox`
 
 All values below come from read-only AWS API calls (`list-*`, `describe-*`, `get-caller-identity`). No mutation was performed. The `cloud-sandbox` role is intentionally scoped — some account-level IAM reads are denied, which is expected and noted.
