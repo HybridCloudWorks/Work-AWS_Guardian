@@ -1,0 +1,39 @@
+# Dependabot configuration for Work-AWS_Guardian
+# Covers every dependency ecosystem present in the repo so updates (incl.
+# security patches) arrive as reviewable PRs rather than surfacing only as a
+# failing CI audit. Grouped minor/patch updates keep PR volume manageable.
+version: 2
+updates:
+  # Next.js console (npm)
+  - package-ecosystem: "npm"
+    directory: "/console"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      console-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Python domain model / tooling (pip via pyproject.toml)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # GitHub Actions used by CI workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Terraform root module
+  - package-ecosystem: "terraform"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5

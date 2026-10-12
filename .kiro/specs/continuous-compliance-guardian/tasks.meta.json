@@ -1,0 +1,384 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "**0.2 Capture live AgentCore contract**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325463
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616330220
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620093780
+      }
+    ],
+    "**0.3 Capture Nova Sonic contract**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325525
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620097584
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620237691
+      }
+    ],
+    "**0.4 Resolve Terraform version baseline**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325562
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620542940
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620976242
+      }
+    ],
+    "**1.1 Define typed contracts**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325604
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791620980314
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791621468744
+      }
+    ],
+    "**1.3 Reconcile Cedar policies with the live schema**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325638
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791621472761
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791623593404
+      }
+    ],
+    "**1.4 Define policy tests before policy deployment**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325671
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791623597646
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791623739649
+      }
+    ],
+    "**2.1 Establish modular Terraform layout**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325704
+      },
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791623743860
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791701999414
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791702803716
+      }
+    ],
+    "**2.2 Harden evidence storage**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325749
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791702808712
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791703123514
+      }
+    ],
+    "**2.3 Provision least-privilege identities**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325796
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791703128918
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791703875438
+      }
+    ],
+    "**2.4 Provision EventBridge and discovery runtime**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325831
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791703878823
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704103165
+      }
+    ],
+    "**2.5 Provision AgentCore Gateway and policy resources**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325863
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704106660
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704466259
+      }
+    ],
+    "**3.4 Replace the seed plan stub only after safety review**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325898
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704470950
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704650660
+      }
+    ],
+    "**4.2 Implement Gateway invocation adapter** *(local Cedar-first model + double done; live AgentCore transport gated on 0.2)*": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325930
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791704655233
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705008598
+      }
+    ],
+    "**4.3 Implement audited policy activation control plane**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616325977
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705011818
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705383724
+      }
+    ],
+    "**5.1 Implement Cognito/API control plane** *(service + authz contracts done offline; Cognito/API Gateway/Lambda wiring gated on 0.2)*": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326014
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705388355
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705732235
+      }
+    ],
+    "**5.2 Implement Next.js App Router console**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326107
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791705735458
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791706019295
+      }
+    ],
+    "**5.3 Implement Nova Sonic adapter or safe mock**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326162
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791706023271
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791706201929
+      }
+    ],
+    "**6.1 Build complete test matrix** *(offline matrix + traceability done; sandbox e2e gated on 0.2)*": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326214
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791706204932
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791757873255
+      }
+    ],
+    "**6.2 Extend CI validation**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326275
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791757877865
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791766583620
+      }
+    ],
+    "**6.3 Add observability and budget checks** *(metric contracts done offline; CloudWatch emission + dashboard gated on 0.2)*": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326331
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791766587616
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791767043097
+      }
+    ],
+    "**6.4 Run the demo rehearsal**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326388
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791767046565
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791767342448
+      }
+    ],
+    "**6.5 Document teardown and rollback**": [
+      {
+        "executionId": "0a5f133a-2170-4b43-a527-9c78906d78a6",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791616326436
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791767346256
+      },
+      {
+        "executionId": "17badd54-8c8c-4226-be8a-26c3a384b921",
+        "chatSessionId": "sess_f2b63159-b046-4466-a540-5ebee2b0f591",
+        "timestamp": 1791767571471
+      }
+    ]
+  }
+}

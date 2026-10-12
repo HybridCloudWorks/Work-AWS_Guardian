@@ -17,6 +17,19 @@ Ordering mirrors Cedar semantics:
 
 Each rule carries the policy ID it represents so decision evidence records the
 determining policy, matching `CCG-REQ-019`.
+
+Action ID format
+----------------
+`PolicyDecision.action_id` uses the **full Cedar action identifier** format
+`AgentCore::Action::"RemediationTarget___<tool_name>"`, matching the action IDs
+in `policies/remediation-permits.cedar` and `policies/guardrails.cedar`.  This
+keeps audit evidence consistent with the deployed policy files.  The short tool
+name (`request.tool`) continues to be used internally for forbid-rule matching
+and tool-handler dispatch.
+
+The gateway ARN target name prefix (`"RemediationTarget"`) is exported as
+`CEDAR_TARGET_NAME` so it can be updated in one place when the deployed target
+name is confirmed.
 """
 
 from __future__ import annotations
@@ -28,6 +41,29 @@ from datetime import datetime, timezone
 from .contracts import Decision, PolicyDecision, RemediationRequest
 
 _FORBIDDEN_CIDRS = frozenset({"0.0.0.0/0", "::/0"})
+
+# ---------------------------------------------------------------------------
+# Cedar action ID helpers
+# ---------------------------------------------------------------------------
+
+#: Target name embedded in Cedar action IDs. Must match the name given at
+#: ``CreateGatewayTarget`` time. Confirm after the first sandbox deploy and
+#: update ``docs/AGENTCORE_CAPABILITY_RECORD.md`` §1.3.
+CEDAR_TARGET_NAME: str = "RemediationTarget"
+
+#: Cedar namespace prefix for all CCG actions.
+CEDAR_ACTION_PREFIX: str = "AgentCore::Action::"
+
+
+def to_cedar_action_id(tool_name: str) -> str:
+    """Return the full Cedar action ID for a registered tool name.
+
+    Example::
+
+        to_cedar_action_id("s3_encryption_enablement")
+        # -> 'AgentCore::Action::"RemediationTarget___s3_encryption_enablement"'
+    """
+    return f'{CEDAR_ACTION_PREFIX}"{CEDAR_TARGET_NAME}___{tool_name}"'
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,6 +157,8 @@ def evaluate(ctx: AuthzContext, forbid_rules: Sequence[Rule] = FORBID_RULES) -> 
         return _Outcome(Decision.DENY, "permit set is inactive", ("default-deny-permits-inactive",))
 
     # An active, action-specific permit for an eligible sandbox target.
+    # The policy ID mirrors the logical name used in remediation-permits.cedar
+    # and docs/POLICY_CATALOG.md §7.
     return _Outcome(
         Decision.ALLOW,
         "registered action permit matched",
@@ -136,7 +174,13 @@ def decide(
     policy_set_version: str,
     evaluated_at: datetime | None = None,
 ) -> PolicyDecision:
-    """Produce a full PolicyDecision with decision evidence fields populated."""
+    """Produce a full PolicyDecision with decision evidence fields populated.
+
+    ``action_id`` is the **full Cedar action identifier**
+    (``AgentCore::Action::"RemediationTarget___<tool>"``), consistent with the
+    policy files and audit catalog.  Use ``to_cedar_action_id`` to reconstruct
+    the short tool name from it when needed internally.
+    """
     ctx = AuthzContext(request=request, permit_active=permit_active, registered_tools=registered_tools)
     outcome = evaluate(ctx)
     return PolicyDecision(
@@ -144,7 +188,7 @@ def decide(
         request_id=request.request_id,
         correlation_id=request.correlation_id,
         actor=request.actor,
-        action_id=request.tool,
+        action_id=to_cedar_action_id(request.tool),
         target_arn=request.target.arn,
         matched_policy_ids=outcome.matched,
         policy_set_version=policy_set_version,
