@@ -62,7 +62,13 @@ class CleanupBoundTests(unittest.TestCase):
         )
         # Missing name prefix.
         self.assertFalse(
-            is_self_created(TargetRef("arn:aws:s3:::real-bucket", "s3_bucket", {"CCGDemo": "true", SEED_MARKER_TAG: "true"}))
+            is_self_created(
+                TargetRef(
+                    "arn:aws:s3:::real-bucket",
+                    "s3_bucket",
+                    {"CCGDemo": "true", SEED_MARKER_TAG: "true"},
+                )
+            )
         )
 
     def test_cleanup_refuses_target_without_seed_convention(self) -> None:

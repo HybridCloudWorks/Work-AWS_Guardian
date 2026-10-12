@@ -31,7 +31,6 @@ from collections.abc import Callable
 from ccg.authz import to_cedar_action_id
 from ccg.contracts import (
     Decision,
-    InvocationResult,
     RemediationRequest,
     TargetRef,
     ToolOutcome,

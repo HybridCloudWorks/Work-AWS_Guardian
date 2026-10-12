@@ -18,7 +18,6 @@ from ccg.contracts import (
     Severity,
     SourceResult,
     TargetRef,
-    ToolOutcome,
 )
 from ccg.reconcile import is_allowed_transition
 
