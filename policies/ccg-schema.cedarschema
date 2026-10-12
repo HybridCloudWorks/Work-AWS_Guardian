@@ -1,0 +1,125 @@
+{
+  "AgentCore": {
+    "entityTypes": {
+      "IamEntity": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "id": { "type": "String", "required": true }
+          }
+        }
+      },
+      "Gateway": {
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      }
+    },
+    "actions": {
+      "Mcp": {
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"]
+        }
+      },
+      "CallTool": {
+        "memberOf": [{ "id": "Mcp" }],
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"]
+        }
+      },
+      "RemediationTarget___security_group_correction": {
+        "memberOf": [{ "id": "CallTool" }],
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "Record",
+                "required": true,
+                "attributes": {
+                  "proposed_cidr": { "type": "String", "required": true },
+                  "group_id":      { "type": "String", "required": false },
+                  "finding_id":    { "type": "String", "required": false }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RemediationTarget___s3_encryption_enablement": {
+        "memberOf": [{ "id": "CallTool" }],
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "Record",
+                "required": true,
+                "attributes": {
+                  "bucket_name": { "type": "String",  "required": true },
+                  "algorithm":   { "type": "String",  "required": false },
+                  "make_public": { "type": "Boolean", "required": false },
+                  "finding_id":  { "type": "String",  "required": false }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RemediationTarget___compliant_tagging": {
+        "memberOf": [{ "id": "CallTool" }],
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "Record",
+                "required": true,
+                "attributes": {
+                  "resource_arn": { "type": "String", "required": true },
+                  "tags": {
+                    "type": "Record",
+                    "required": false,
+                    "attributes": {}
+                  },
+                  "finding_id":  { "type": "String",  "required": false }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RemediationTarget___access_key_rotation": {
+        "memberOf": [{ "id": "CallTool" }],
+        "appliesTo": {
+          "principalTypes": ["IamEntity"],
+          "resourceTypes": ["Gateway"],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "Record",
+                "required": true,
+                "attributes": {
+                  "access_key_id": { "type": "String",  "required": true },
+                  "username":      { "type": "String",  "required": false },
+                  "confirm":       { "type": "Boolean", "required": false },
+                  "finding_id":    { "type": "String",  "required": false }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

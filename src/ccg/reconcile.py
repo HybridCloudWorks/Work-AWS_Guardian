@@ -20,12 +20,23 @@ here; persistence is via the injected `FindingRepository`.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from uuid import uuid4
 
 from .contracts import AuditEvent, Finding, FindingStatus, ToolOutcome
 from .ports import AuditSink, FindingRepository
+
+# Observability note (P1.4): the reconciler deliberately emits NO tool-outcome
+# metrics. Tool outcomes (APPLIED/NOOP/FAILED) are counted exactly once at the
+# Gateway boundary (`ccg.gateway_core`), which is where every tool outcome
+# originates. `record_tool_outcome` here only mirrors that outcome into the
+# finding's lifecycle status, so emitting again would double-count. Resolution
+# is a lifecycle transition, not a tool outcome, and has no catalog metric; the
+# finding's RESOLVED state is itself the operator-visible signal via the audit
+# trail and the findings store. If a dedicated resolution counter is wanted
+# later, add it to the `Metric` catalog first (do not reuse a tool metric).
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +85,38 @@ _ALLOWED_TRANSITIONS: dict[FindingStatus, frozenset[FindingStatus]] = {
 _RESOLVABLE_FROM = frozenset(
     {FindingStatus.REMEDIATION_SUCCEEDED, FindingStatus.REMEDIATION_NOOP}
 )
+
+# Terminal / clean statuses for teardown reconciliation (spec task 6.5, Phase A).
+# A finding in one of these states has no tool operation in flight: either it was
+# never actioned (OPEN), it was explicitly accepted (ACCEPTED_RISK), or a
+# confirming discovery read already closed it (RESOLVED). A finding in any
+# in-flight state (REMEDIATION_REQUESTED / _SUCCEEDED / _NOOP / _FAILED) is NOT
+# clean — a tool outcome has been recorded but not yet reconciled by a discovery
+# read, so teardown must wait rather than delete under an uncertain outcome.
+_TEARDOWN_CLEAN_STATUSES = frozenset(
+    {FindingStatus.OPEN, FindingStatus.RESOLVED, FindingStatus.ACCEPTED_RISK}
+)
+
+
+def is_teardown_clean(status: FindingStatus) -> bool:
+    """True when a single finding is in a terminal/clean state for teardown.
+
+    Teardown (task 6.5 Phase A) may only proceed once no remediation is in
+    flight. A finding mid-remediation (requested/succeeded/noop/failed but not
+    yet confirmed by discovery) is deliberately treated as *not* clean, so the
+    operator either waits for reconciliation or records an explicit decision.
+    """
+    return status in _TEARDOWN_CLEAN_STATUSES
+
+
+def teardown_blocking_findings(findings: Iterable[Finding]) -> list[Finding]:
+    """Return the findings that block teardown because they are not clean.
+
+    An empty list means every finding is in a terminal/clean state and the
+    reconciliation gate (Phase A) is satisfied. This is a read-only check: it
+    changes no state and performs no AWS calls.
+    """
+    return [finding for finding in findings if not is_teardown_clean(finding.status)]
 
 _TOOL_OUTCOME_TO_STATUS: dict[ToolOutcome, FindingStatus] = {
     ToolOutcome.APPLIED: FindingStatus.REMEDIATION_SUCCEEDED,

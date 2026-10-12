@@ -23,6 +23,7 @@ from .contracts import (
     Finding,
     FindingStatus,
 )
+from .observability import Metric, MetricSink, NullMetricSink
 from .ports import AuditSink, DiscoverySource, FindingRepository
 
 # Statuses that represent an in-flight or terminal remediation lifecycle. A
@@ -130,10 +131,12 @@ class DiscoveryCoordinator:
         sources: Sequence[DiscoverySource],
         repository: FindingRepository,
         audit_sink: AuditSink | None = None,
+        metrics: MetricSink | None = None,
     ) -> None:
         self._sources = tuple(sources)
         self._repository = repository
         self._audit_sink = audit_sink
+        self._metrics = metrics or NullMetricSink()
 
     def run(self, correlation_id: str) -> DiscoveryRun:
         run_id = str(uuid4())
@@ -166,6 +169,11 @@ class DiscoveryCoordinator:
                         findings_changed += 1
             except Exception as exc:  # noqa: BLE001 - source isolation is intentional.
                 failures.append(f"{source.name}: {type(exc).__name__}")
+                # One failed source is a per-source failure signal. The source
+                # name is low-cardinality and carries no secret/ARN.
+                self._metrics.increment(
+                    Metric.DISCOVERY_FAILURE, dimensions={"source": source.name}
+                )
 
         completed_at = datetime.now(timezone.utc)
         result = DiscoveryRun(
@@ -177,6 +185,16 @@ class DiscoveryCoordinator:
             findings_upserted=findings_upserted,
             failures=tuple(failures),
         )
+
+        # Emit run-level metrics. `outcome` is a low-cardinality class, never a
+        # secret or ARN. A run that saw at least one failure is PARTIAL; a run
+        # where every source failed and nothing was collected is a full failure.
+        outcome = "partial" if failures else "succeeded"
+        self._metrics.increment(Metric.DISCOVERY_RUN, dimensions={"outcome": outcome})
+        if failures:
+            self._metrics.increment(Metric.DISCOVERY_PARTIAL)
+        self._metrics.gauge(Metric.FINDINGS_UPSERTED, findings_upserted)
+
         if self._audit_sink is not None:
             self._audit_sink.record(
                 AuditEvent(
