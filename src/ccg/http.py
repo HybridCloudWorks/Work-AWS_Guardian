@@ -11,6 +11,7 @@ import json
 from uuid import uuid4
 
 from .api import AuthenticatedPrincipal, ComplianceApi, UnauthorizedError
+from .auth import PrincipalResolver, TokenVerifier
 from .contracts import PolicyActivationRequest, RemediationCommand
 
 
@@ -23,6 +24,21 @@ class ApiHttpAdapter:
         self._service = service
         self._principal_resolver = principal_resolver
 
+    @classmethod
+    def with_cognito_auth(
+        cls,
+        service: ComplianceApi,
+        verifier: TokenVerifier,
+    ) -> "ApiHttpAdapter":
+        """Build an adapter whose principal is resolved from a Cognito JWT.
+
+        The ``verifier`` validates the bearer token (RS256 signature against the
+        Cognito JWKS plus ``iss``/``aud``/``exp`` in production). A failed or
+        missing token resolves to an unauthenticated principal, which the
+        service rejects — the adapter fails closed with a 403.
+        """
+        return cls(service, PrincipalResolver(verifier))
+
     def handle(self, event: Mapping[str, object]) -> dict[str, object]:
         try:
             principal = self._principal_resolver(event)
@@ -33,6 +49,18 @@ class ApiHttpAdapter:
             if method == "GET" and path == "/findings":
                 findings = [finding.to_record() for finding in self._service.get_findings(principal)]
                 return self._response(200, {"findings": findings})
+            if method == "GET" and path == "/decisions":
+                query = self._query(event)
+                finding_id = query.get("finding_id")
+                request_id = query.get("request_id")
+                evidence = self._service.get_decision_evidence(
+                    principal,
+                    finding_id=str(finding_id) if finding_id else None,
+                    request_id=str(request_id) if request_id else None,
+                )
+                return self._response(
+                    200, {"decisions": [record.to_record() for record in evidence]}
+                )
             if method == "POST" and path == "/policy/activation":
                 body = self._body(event)
                 request = PolicyActivationRequest(
@@ -78,6 +106,13 @@ class ApiHttpAdapter:
         if not isinstance(parsed, dict):
             raise ValueError("body must be an object")
         return parsed
+
+    @staticmethod
+    def _query(event: Mapping[str, object]) -> Mapping[str, object]:
+        params = event.get("queryStringParameters") or {}
+        if not isinstance(params, Mapping):
+            raise ValueError("queryStringParameters must be an object")
+        return params
 
     @staticmethod
     def _correlation_id(event: Mapping[str, object]) -> str:
