@@ -1,0 +1,11 @@
+# Default owner for everything in the repo.
+*                           @saulpatinojr
+
+# Security-sensitive paths — Cedar policy, IAM, and automation.
+# Changes here are security-sensitive per CONTRIBUTING.md / SECURITY.md.
+/policies/                  @saulpatinojr
+/modules/iam-policies/      @saulpatinojr
+/modules/gateway-policy/    @saulpatinojr
+/modules/agentcore-gateway/ @saulpatinojr
+/.github/workflows/         @saulpatinojr
+/.github/dependabot.yml     @saulpatinojr
