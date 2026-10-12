@@ -17,7 +17,7 @@
         <mxCell id="hcp" value="HCP Terraform Cloud&#10;(state + speculative plan)&#10;OIDC → AWS (human-approved apply)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="430" y="90" width="240" height="70" as="geometry" />
         </mxCell>
-        <mxCell id="aws" value="AWS sandbox 936361168441 / us-east-1&#10;CLEAN SLATE — nothing deployed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="aws" value="AWS sandbox <SANDBOX_ACCOUNT_ID> / us-east-1&#10;CLEAN SLATE — nothing deployed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
           <mxGeometry x="720" y="90" width="260" height="70" as="geometry" />
         </mxCell>
         <mxCell df1="1" style="endArrow=block;html=1;" edge="1" parent="1" source="dev" target="gh"><mxGeometry relative="1" as="geometry" /></mxCell>

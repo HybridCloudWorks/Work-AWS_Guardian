@@ -5,7 +5,7 @@
 **Preconditions (all satisfied unless noted):**
 - Phase 1.2 threat model reviewed → `docs/THREAT_MODEL.md`
 - Terraform for the resources merged and validated (PRs #9–#11); `enable_agentcore_gateway` defaults `false`
-- Sandbox `936361168441` / `us-east-1` confirmed empty (`docs/CLOUD_INVENTORY.md`)
+- Sandbox `<SANDBOX_ACCOUNT_ID>` / `us-east-1` confirmed empty (`docs/CLOUD_INVENTORY.md`)
 - ⚠️ **Unverified:** the HCP workspace's `TFC_AWS_RUN_ROLE_ARN` OIDC run role. The `cloud-sandbox` CLI role cannot read IAM providers, so confirm via console before applying (see step 1).
 
 ## Who does what
