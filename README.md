@@ -1,22 +1,23 @@
 # Continuous Compliance Guardian (CCG)
 
-> **Status: planning-stage POC. Nothing is deployed to any cloud account.** The sandbox is a verified clean slate. All Python is an offline domain model behind test doubles; all Terraform is validated but unapplied (feature-flagged off).
+> **Status: POC — nothing is deployed to any cloud account.** The offline domain model and the full test/validation suite are complete; all live-AWS paths are feature-flagged off and gated on a capability-capture step (0.2/0.3). The sandbox is a verified clean slate; all Terraform is validated but unapplied.
 
 AWS sandbox proof-of-concept that detects Well-Architected **Security-pillar** drift and proves that every remediation is authorized at an **external Amazon Bedrock AgentCore Cedar policy boundary** — never by a prompt, UI state, or application boolean.
 
 ## What actually works today
 
-- **Offline domain model** (`src/ccg/`, Python 3.14, 117 passing tests): discovery normalization, Cedar-first authorization *model*, four idempotent remediation tools, audited policy-activation service, finding-reconciliation lifecycle, redacting audit sink.
+- **Offline domain model** (`src/ccg/`, Python 3.14): discovery normalization, Cedar-first authorization model with a faithful AgentCore transport emulator, four idempotent remediation tools, audited policy-activation control plane, finding-reconciliation lifecycle, Cognito/API control plane, read-only Nova Sonic voice mock, and a redacting audit sink.
+- **Validation:** 388 Python tests + 15 Terraform native tests + 14 console tests, all green in CI (plus CodeQL and secret scanning).
 - **Runnable end-to-end demo, no AWS required:**
   ```bash
   PYTHONPATH=src python -m ccg.demo
   ```
   Chains discover → deny (permits inactive) → audited activation → allow → single idempotent execution → reconcile-to-RESOLVED.
-- **Terraform** (repo root is the Terraform root — there is no `terraform/` subdir): storage, least-privilege IAM policy documents, and a feature-flagged AgentCore Gateway + Policy Engine, all validated via HCP speculative plans and **off by default** (`enable_agentcore_gateway = false`).
+- **Terraform** (repo root is the Terraform root — there is no `terraform/` subdir; see [`README-terraform.md`](README-terraform.md) for the layout): storage, least-privilege IAM, discovery, gateway/policy, console-api, and voice-adapter modules, all validated via HCP speculative plans and **off by default** (every `enable_*` flag defaults `false`).
 
 ## Honest status of the safety guarantee
 
-The Cedar-first guarantee is **designed and tested as an offline model**, but is **not yet enforced in any deployable configuration**. See the review below — in particular, the deployed engine mode (`LOG_ONLY`) does **not** enforce decisions, and the production gateway client is currently a pass-through. Treat the boundary as unproven against real AWS until the enforcement work in the remediation plan is done.
+The Cedar-first guarantee is **designed, implemented, and tested as an offline model** — the production gateway client defers the decision to the transport (no local allow/deny substitute) and is exercised against a faithful AgentCore emulator so no "green" result rests on an in-memory double alone. It is **not yet enforced against real AWS**: live enforcement requires the capability-capture step (0.2) to confirm the generated Cedar schema, real action IDs, and the live transport. Treat the boundary as unproven against real AWS until that live capture and a reviewed enforcement activation are done. The deployed engine mode is `LOG_ONLY` by default; flipping to enforce is an audited, control-plane-only activation.
 
 ## Key documents
 
