@@ -33,7 +33,7 @@ class PolicyApiVoiceTests(unittest.TestCase):
         self.findings.upsert(
             Finding(
                 finding_id="finding-1",
-                rule_id="test-rule",
+                rule_id="s3-encryption-missing",
                 source="test",
                 target=target,
                 severity=Severity.MEDIUM,
@@ -106,13 +106,16 @@ class PolicyApiVoiceTests(unittest.TestCase):
             self.api.request_remediation(self.viewer, command)
 
     def test_api_resolves_target_from_finding_before_gateway(self) -> None:
+        # The finding's rule_id maps to the s3 encryption tool; the command uses
+        # that tool (so it passes API-layer rule validation) but the gateway has
+        # no handler registered for it, so the gateway itself produces the DENY.
         command = RemediationCommand(
             "req-1",
             "corr-1",
             "admin",
             "finding-1",
-            "unknown",
-            {},
+            "s3_encryption_enablement",
+            {"algorithm": "AES256"},
             "idem-1",
             0,
         )

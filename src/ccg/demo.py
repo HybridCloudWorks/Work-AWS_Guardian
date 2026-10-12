@@ -35,10 +35,16 @@ from .contracts import (
     Severity,
     TargetRef,
 )
+from .gateway import (
+    AgentCoreGatewayClient,
+    EffectivePolicyView,
+    FaithfulAgentCoreEmulator,
+    GatewayEnforcementMode,
+)
 from .policy import InMemoryPolicyControlPlane, PolicyActivationService
 from .reconcile import ReconcileContext, ReconciliationService
 from .testing import (
-    InMemoryCedarGateway,
+    InMemoryDecisionEvidenceRepository,
     InMemoryFindingRepository,
     RecordingAuditSink,
     StaticDiscoverySource,
@@ -87,12 +93,25 @@ def run_demo() -> DemoResult:
     control_plane = InMemoryPolicyControlPlane(policy_engine_id="demo-engine")
     policy = PolicyActivationService(control_plane, audit)
 
-    gateway = InMemoryCedarGateway(audit)
-    for name, handler in default_tool_handlers().items():
+    # Exercise the real transport path end to end: the production
+    # AgentCoreGatewayClient wired to the faithful AgentCore emulator, sharing
+    # one EffectivePolicyView that the control-plane activation propagates into.
+    # No green claim here rests on the in-memory double.
+    policy_view = EffectivePolicyView()
+    handlers = default_tool_handlers()
+    emulator = FaithfulAgentCoreEmulator(
+        policy_view=policy_view,
+        registered_tools=frozenset(handlers),
+    )
+    gateway = AgentCoreGatewayClient(emulator, audit)
+    for name, handler in handlers.items():
         # Adapt (request, effector=None) handler to the ToolHandler signature.
         gateway.register(name, lambda request, _h=handler: _h(request))
 
-    api = ComplianceApi(gateway=gateway, policy=policy, findings=repo)
+    evidence_repo = InMemoryDecisionEvidenceRepository()
+    api = ComplianceApi(
+        gateway=gateway, policy=policy, findings=repo, decision_evidence=evidence_repo
+    )
     reconciler = ReconciliationService(repo, audit)
     admin = AuthenticatedPrincipal(actor="admin", roles=frozenset({"CCGAdmin", "CCGRemediator"}))
 
@@ -131,11 +150,16 @@ def run_demo() -> DemoResult:
     )
 
     # Propagate the control-plane activation to the Gateway enforcement point.
-    # In AWS this is AgentCore propagating policy state to the Gateway; with the
-    # in-memory doubles the demo makes that propagation explicit and only does so
-    # when the audited activation actually succeeded.
+    # In AWS this models AgentCore propagating a confirmed UpdatePolicy (status
+    # ACTIVE) to the Gateway evaluation path (async, eventually consistent;
+    # capability record §3). The demo only propagates when the audited activation
+    # actually succeeded, so the Gateway never enforces a permit the control
+    # plane has not confirmed ACTIVE.
     if activation.outcome.value == "ACTIVATED" and activation.state is not None:
-        gateway.activate_permits(activation.state.policy_set_version)
+        policy_view.propagate_activation(
+            policy_set_version=activation.state.policy_set_version,
+            enforcement_mode=GatewayEnforcementMode.ENFORCE,
+        )
 
     # Record remediation intent through the reconciler (lifecycle authority).
     rec_ctx = ReconcileContext(actor="admin", correlation_id="corr-demo", request_id="req-demo-1")

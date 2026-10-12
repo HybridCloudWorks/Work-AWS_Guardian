@@ -1,6 +1,6 @@
 import unittest
 
-from ccg.authz import decide
+from ccg.authz import decide, to_cedar_action_id
 from ccg.contracts import Decision, RemediationRequest, TargetRef
 from ccg.tools import REGISTERED_TOOLS
 
@@ -63,10 +63,28 @@ class AuthzOrderingTests(unittest.TestCase):
 
     def test_decision_evidence_is_populated(self) -> None:
         d = decide_with(req(), permit_active=True)
-        self.assertEqual(d.action_id, "s3_encryption_enablement")
+        # action_id must carry the full Cedar action ID for audit evidence
+        self.assertEqual(d.action_id, to_cedar_action_id("s3_encryption_enablement"))
         self.assertEqual(d.target_arn, "arn:aws:s3:::ccg-demo")
         self.assertEqual(d.policy_set_version, "test-v1")
         self.assertTrue(d.reason)
+
+    def test_action_id_format(self) -> None:
+        """Full Cedar action ID format is stable and matches policy files."""
+        self.assertEqual(
+            to_cedar_action_id("s3_encryption_enablement"),
+            'AgentCore::Action::"RemediationTarget___s3_encryption_enablement"',
+        )
+        self.assertEqual(
+            to_cedar_action_id("security_group_correction"),
+            'AgentCore::Action::"RemediationTarget___security_group_correction"',
+        )
+
+    def test_action_id_used_in_deny_decisions(self) -> None:
+        """Denied decisions also carry the full Cedar action ID."""
+        d = decide_with(req(), permit_active=False)
+        self.assertEqual(d.action_id, to_cedar_action_id("s3_encryption_enablement"))
+        self.assertEqual(d.decision, Decision.DENY)
 
 
 if __name__ == "__main__":

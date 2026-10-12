@@ -32,3 +32,8 @@ output "policy_engine_id" {
   description = "ID of the AgentCore Policy Engine (null while the feature flag is off)."
   value       = try(aws_bedrockagentcore_policy_engine.this[0].policy_engine_id, null)
 }
+
+output "enforcement_mode" {
+  description = "Policy Engine binding mode on the Gateway. Fixed to LOG_ONLY in Terraform (evaluate-only, no enforcement). Flipping to ENFORCE is a control-plane-only activation, never a Terraform apply. Null while the feature flag is off."
+  value       = try(aws_bedrockagentcore_gateway.this[0].policy_engine_configuration[0].mode, null)
+}
