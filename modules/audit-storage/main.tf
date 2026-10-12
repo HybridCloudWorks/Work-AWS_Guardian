@@ -103,9 +103,52 @@ data "aws_iam_policy_document" "bucket" {
       values   = ["true"]
     }
   }
+
+  # Pin the SSE algorithm. The statement above forbids a write with no SSE
+  # header; this one forbids a write that supplies a header with any value
+  # other than AES256 (e.g. an attempt to switch to aws:kms). Together they
+  # force every write to use exactly the bucket default (AES256, AWS-managed
+  # keys per ADR 0003). StringNotEquals only matches when the key is present,
+  # so a header-absent write is caught by DenyUnencryptedObjectUploads above.
+  statement {
+    sid    = "DenyNonAes256ObjectUploads"
+    effect = "Deny"
+
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.audit.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "s3:x-amz-server-side-encryption"
+      values   = ["AES256"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "audit" {
   bucket = aws_s3_bucket.audit.id
   policy = data.aws_iam_policy_document.bucket.json
+}
+
+# Server access logging. POC decision: log to the audit bucket itself under a
+# "log/" prefix (self-logging) instead of provisioning a second always-on log
+# bucket, which the cost/POC constraint forbids. Self-logging is an accepted
+# AWS pattern for low-volume buckets; the lifecycle rule above expires the
+# log/ objects on the same 30-day schedule as the rest of the bucket, so the
+# access logs do not accumulate cost. The access-log delivery writes do not
+# carry the client SSE header, so BucketOwnerEnforced + bucket-default SSE
+# (AES256) cover them while the PutObject deny statements only gate client
+# uploads. Flip enable_access_logging off for teardown or if a reviewer
+# prefers a separate feature-flagged log bucket.
+resource "aws_s3_bucket_logging" "audit" {
+  count = var.enable_access_logging ? 1 : 0
+
+  bucket        = aws_s3_bucket.audit.id
+  target_bucket = aws_s3_bucket.audit.id
+  target_prefix = "log/"
 }

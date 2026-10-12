@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import re
 from typing import TextIO, cast
 
 from .contracts import AuditEvent, JsonValue
+from .observability import Metric, MetricSink, NullMetricSink
 from .ports import AuditSink
 
 _SENSITIVE_KEY_PARTS = (
@@ -37,6 +39,40 @@ def _redact(value: JsonValue, key: str | None = None) -> JsonValue:
 def redact_details(details: dict[str, JsonValue]) -> dict[str, JsonValue]:
     """Redact sensitive keys in an audit event's details. Public for reuse."""
     return cast(dict[str, JsonValue], _redact(details))
+
+
+# Patterns for secret-shaped tokens embedded in otherwise free-form text. The
+# key-based ``redact_details`` cannot see these because free text has no key, so
+# a value-level pass is needed for any text that is handed to a downstream
+# consumer such as the voice briefing (CCG-REQ-035).
+_SECRET_TEXT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # AWS access key IDs: AKIA/ASIA/AGPA/AIDA/AROA... followed by 16 base32 chars.
+    re.compile(r"\b(?:AKIA|ASIA|AGPA|AIDA|AROA|ANPA|ANVA|ABIA|ACCA)[A-Z0-9]{16}\b"),
+    # AWS secret access keys: 40-char base64-ish run.
+    re.compile(r"\b[A-Za-z0-9/+]{40}\b"),
+    # Bearer / generic token assignments: token=..., secret: ..., bearer ...
+    re.compile(
+        r"(?i)\b(?:bearer|token|secret|password|api[_-]?key|authorization)\b"
+        r"\s*[:=]?\s*\S+"
+    ),
+)
+
+_REDACTED_TEXT = "[REDACTED]"
+
+
+def redact_text(text: str) -> str:
+    """Mask secret-shaped substrings in free-form text.
+
+    Complements :func:`redact_details` (which is key-based) for content that
+    travels as a plain string with no surrounding key, such as the voice
+    briefing passed to the Nova Sonic transport and the summary it returns.
+    Raw audio never reaches this function: the voice adapter never retains or
+    forwards audio frames (CCG-REQ-035).
+    """
+    redacted = text
+    for pattern in _SECRET_TEXT_PATTERNS:
+        redacted = pattern.sub(_REDACTED_TEXT, redacted)
+    return redacted
 
 
 class JsonLineAuditSink(AuditSink):
@@ -71,8 +107,9 @@ class FailClosedAuditSink(AuditSink):
     durable transport implementation added at gate 0.2.
     """
 
-    def __init__(self, inner: AuditSink) -> None:
+    def __init__(self, inner: AuditSink, metrics: MetricSink | None = None) -> None:
         self._inner = inner
+        self._metrics = metrics or NullMetricSink()
         self.dead_letter: list[AuditEvent] = []
 
     def record(self, event: AuditEvent) -> None:
@@ -80,6 +117,10 @@ class FailClosedAuditSink(AuditSink):
             self._inner.record(event)
         except Exception as exc:  # noqa: BLE001 - reclassify as a fail-closed audit error.
             self.dead_letter.append(event)
+            # The event_type is a stable, low-cardinality label (no secret/ARN).
+            self._metrics.increment(
+                Metric.AUDIT_WRITE_FAILURE, dimensions={"event_type": event.event_type}
+            )
             raise AuditWriteError(
                 f"failed to record audit event '{event.event_type}' ({event.event_id})"
             ) from exc
