@@ -29,7 +29,7 @@ jobs:
   terraform:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Pinned to a real, released Terraform patch version within the
       # versions.tf constraint `>= 1.8.0, < 2.0.0`. 1.16.5 matches the runtime
@@ -74,7 +74,7 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.14"
@@ -106,7 +106,7 @@ jobs:
       run:
         working-directory: console
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "24.11.1"
@@ -124,7 +124,7 @@ jobs:
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: trufflesecurity/trufflehog@v3.90.5
