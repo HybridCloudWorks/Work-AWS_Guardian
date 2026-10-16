@@ -16,7 +16,7 @@
 
 | Field | Value | Source | Status |
 |---|---|---|---|
-| Account ID (last 4 only) | `…8441` | `aws sts get-caller-identity` (2026-09-17) | ☑ |
+| Account ID | `<redacted>` | `aws sts get-caller-identity` (2026-09-17) | ☑ |
 | Configured profile / role | profile `ccg-sandbox` → SSO role `cloud-sandbox` | caller identity | ☑ |
 | Region | `us-east-1` | caller identity / config | ☑ |
 | Explicit non-production designation | `cloud-sandbox` SSO role; 1 of 2 accounts; role cannot `iam:ListAccountAliases` (scoped, non-admin) — operator to attest it is NOT shared with prod | operator attestation | ☑ |

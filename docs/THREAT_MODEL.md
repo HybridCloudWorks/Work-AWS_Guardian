@@ -3,7 +3,7 @@
 **Status:** Review artifact satisfying spec task **1.2** and requirements §6 gate 6. This is the mandatory gate before any AgentCore Gateway / tool Lambda / policy resource is deployed (spec task 2.5 and the gate-0.2 capture note).
 
 **Date:** 2026-09-18
-**Scope:** POC only, single dedicated sandbox account `…8441` / `us-east-1` (SSO role `cloud-sandbox`). See `docs/CLOUD_INVENTORY.md` for the confirmed empty starting state and `docs/AGENTCORE_CAPABILITY_RECORD.md` for verified API facts.
+**Scope:** POC only, single dedicated sandbox account `<redacted>` / `us-east-1` (SSO role `cloud-sandbox`). See `docs/CLOUD_INVENTORY.md` for the confirmed empty starting state and `docs/AGENTCORE_CAPABILITY_RECORD.md` for verified API facts.
 
 ## Method
 
