@@ -37,3 +37,10 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    ignore:
+      # ADR 0005 pins hashicorp/aws to exactly 6.64.0 in the root and all eleven
+      # modules. Upgrades follow the review in docs/AGENTCORE_CAPABILITY_RECORD.md
+      # ("Provider-upgrade risk documentation"): release-note review, a sandbox
+      # plan, then pins, lock file, CI check and gate02_preflight.py together.
+      # A one-file Dependabot bump can't satisfy that, so it is done by hand.
+      - dependency-name: "hashicorp/aws"
