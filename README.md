@@ -1,5 +1,7 @@
 # Continuous Compliance Guardian (CCG)
 
+[![ci](https://github.com/HybridCloudWorks/Work-AWS_Guardian/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HybridCloudWorks/Work-AWS_Guardian/actions/workflows/ci.yml)
+
 > **Status: POC — nothing is deployed to any cloud account.** The offline domain model and the full test/validation suite are complete; all live-AWS paths are feature-flagged off and gated on a capability-capture step (0.2/0.3). The sandbox is a verified clean slate; all Terraform is validated but unapplied.
 
 AWS sandbox proof-of-concept that detects Well-Architected **Security-pillar** drift and proves that every remediation is authorized at an **external Amazon Bedrock AgentCore Cedar policy boundary** — never by a prompt, UI state, or application boolean.
@@ -35,6 +37,14 @@ The Cedar-first guarantee is **designed, implemented, and tested as an offline m
 
 Use a dedicated sandbox account only. Remediation is off by default. No credentials, Terraform state, or production data belong in this repository.
 
+## Prerequisites
+
+| Tool | Version | Source of truth |
+|---|---|---|
+| Python | 3.14 | `requires-python` in [`pyproject.toml`](pyproject.toml) |
+| Terraform | >= 1.8 (CI uses 1.16.5) | `required_version` in [`versions.tf`](versions.tf) |
+| Node.js | 24.11.1 (console only) | `console` job in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+
 ## Quick start (validation only — no apply)
 
 ```bash
@@ -48,3 +58,22 @@ terraform validate
 ```
 
 Applies are triggered by the reviewed VCS/HCP workflow after a human-approved plan — never from CI, never locally.
+
+## Run the console
+
+The Next.js console lives in [`console/`](console/README.md):
+
+```bash
+cd console
+npm ci
+npm test          # lint, typecheck and build steps are in console/README.md
+npm run dev       # http://localhost:3000
+```
+
+It reads all state from the API set in `NEXT_PUBLIC_API_BASE_URL`. Nothing is deployed, so without a running API it shows no live data. See [`console/README.md`](console/README.md) for the full validate steps and the scenario-to-UI mapping.
+
+## License, contributing and security
+
+- License: [MIT](LICENSE).
+- Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+- Security: report vulnerabilities privately as described in [`SECURITY.md`](SECURITY.md).

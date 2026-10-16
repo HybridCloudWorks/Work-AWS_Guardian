@@ -19,7 +19,7 @@ The single most important correction: **the codebase and its own docs describe t
 | Medium | 9 |
 | Low | 5 |
 
-Nothing is deployed to the cloud (sandbox `…8441` is a clean slate), so **none of these findings represent live exposure today.** They are gating issues that must be resolved before the enforcement-mode deploy — which is exactly the right time to catch them.
+Nothing is deployed to the cloud (sandbox `<redacted>` is a clean slate), so **none of these findings represent live exposure today.** They are gating issues that must be resolved before the enforcement-mode deploy — which is exactly the right time to catch them.
 
 # Method & scope
 

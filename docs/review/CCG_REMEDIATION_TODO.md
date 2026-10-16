@@ -59,4 +59,4 @@ Legend: 🔴 blocks enforcement deploy · 🟠 correctness/security · 🟡 hygi
 
 ## Traceability
 
-Full evidence and severity rationale: `docs/review/CCG_REVIEW_REPORT.md`. Behavioral analysis: `semantic-review/2026-09-17-213032-pr-all.md`.
+Full evidence and severity rationale: [`CCG_REVIEW_REPORT.md`](CCG_REVIEW_REPORT.md).
