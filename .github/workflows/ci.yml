@@ -37,7 +37,7 @@ jobs:
       # runtime 1.16.5"). The previously configured 1.15.8 is NOT a real
       # Terraform release (the 1.x line goes ... 1.14 -> 1.16 -> 1.17-beta;
       # there is no 1.15.x) and would fail to resolve on the runner.
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.16.5
 
