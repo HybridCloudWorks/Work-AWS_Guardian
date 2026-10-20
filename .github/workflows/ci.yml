@@ -65,7 +65,7 @@ jobs:
       - name: terraform test (mock-provider, credential-free)
         run: terraform test
 
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@v6
         with:
           tflint_version: v0.59.1
       - run: tflint --init
