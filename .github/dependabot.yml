@@ -13,6 +13,24 @@ updates:
     groups:
       console-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # Hold TypeScript on the 5.x line. TypeScript 7.0 is the new Go-based
+      # ("native") compiler, and typescript-eslint — a required dependency of
+      # eslint-config-next — does NOT support the TS 7.0 compiler API: the
+      # latest typescript-eslint (8.72.0) declares `typescript: >=4.8.4 <6.1.0`.
+      # So `npm run lint` hard-fails under TS >= 6 with
+      # "typescript-eslint does not support TS 7.0" (see PR #46). This is an
+      # upstream ecosystem gap, not a repo bug; no config here can make the
+      # lint stack understand TS 7.0.
+      #
+      # LIFT THIS when typescript-eslint ships stable support for TS >= 7.1:
+      #   tracking: https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      #   TS 7.0 announcement: https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/
+      # Then bump typescript, typescript-eslint and eslint-config-next together,
+      # run the console lint/typecheck/test/build gates, and remove this ignore.
+      # 5.x minor/patch updates still flow (5.9.3 is current as of this change).
+      - dependency-name: "typescript"
+        versions: [">=6.0.0"]
 
   # Python domain model / tooling (pip via pyproject.toml)
   - package-ecosystem: "pip"
