@@ -125,3 +125,15 @@ variable "alarm_sns_topic_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "lambda_package_path" {
+  description = "Path to the built CCG Lambda deployment zip (from scripts/build_lambda_package.py or the root archive_file). Defaults to the committed placeholder so the module validates standalone before a real build exists."
+  type        = string
+  default     = ""
+}
+
+variable "lambda_package_hash" {
+  description = "base64-encoded sha256 of the Lambda package, for source_code_hash change detection. Empty with the placeholder."
+  type        = string
+  default     = ""
+}

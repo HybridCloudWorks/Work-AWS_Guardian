@@ -1,3 +1,9 @@
+locals {
+  # Use the built CCG package when provided; fall back to the committed
+  # placeholder so the module still validates/plans before a real build.
+  lambda_package = var.lambda_package_path != "" ? var.lambda_package_path : "${path.module}/placeholder.zip"
+}
+
 # Console API: Cognito POC user pool, HTTP API Gateway, and API Lambda stub.
 #
 # Design §3.4:
@@ -87,8 +93,9 @@ resource "aws_lambda_function" "api" {
   # control-plane role for activation; it holds NO remediation permissions and
   # cannot invoke the tool Lambdas, so the API cannot bypass the Gateway.
   # Wired to the real ARN once `enable_roles = true`.
-  role     = "arn:aws:iam::${var.account_id}:role/${var.name_prefix}-api"
-  filename = "${path.module}/placeholder.zip"
+  role             = "arn:aws:iam::${var.account_id}:role/${var.name_prefix}-api"
+  filename         = local.lambda_package
+  source_code_hash = var.lambda_package_hash != "" ? var.lambda_package_hash : null
 
   timeout     = var.lambda_timeout_seconds
   memory_size = var.lambda_memory_mb

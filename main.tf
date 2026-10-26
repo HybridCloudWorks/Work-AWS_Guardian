@@ -34,6 +34,22 @@ module "observability" {
 
 data "aws_caller_identity" "current" {}
 
+# Reproducible CCG Lambda deployment package, built at plan time from the Python
+# package. Excludes test doubles so they never ship in the runtime artifact.
+# source_code_hash is derived from output_base64sha256 so Terraform redeploys
+# only when the code actually changes. Mirrors scripts/build_lambda_package.py.
+data "archive_file" "lambda_package" {
+  type        = "zip"
+  source_dir  = "${path.module}/src"
+  output_path = "${path.module}/dist/ccg_lambda.zip"
+
+  excludes = [
+    "ccg/testing.py",
+    "ccg/demo.py",
+    "ccg/rehearsal.py",
+  ]
+}
+
 # Least-privilege policy documents (source of truth for gate-0.2 role creation).
 module "iam_policies" {
   source = "./modules/iam-policies"
@@ -82,7 +98,9 @@ module "identity" {
 # EventBridge schedule + Python 3.14 discovery Lambda.
 # Gate: gate-0.2 discovery role + read-only source permissions confirmed.
 module "discovery" {
-  source = "./modules/discovery"
+  source              = "./modules/discovery"
+  lambda_package_path = data.archive_file.lambda_package.output_path
+  lambda_package_hash = data.archive_file.lambda_package.output_base64sha256
 
   name_prefix         = var.name_prefix
   region              = var.aws_region
@@ -99,7 +117,9 @@ module "discovery" {
 # Four remediation tool Lambdas (sg-correction, s3-encryption, tagging, key-rotation).
 # Gate: gate-0.2 tool-execution role, Gateway schema, and tool input contracts confirmed.
 module "remediation_tools" {
-  source = "./modules/remediation-tools"
+  source              = "./modules/remediation-tools"
+  lambda_package_path = data.archive_file.lambda_package.output_path
+  lambda_package_hash = data.archive_file.lambda_package.output_base64sha256
 
   name_prefix              = var.name_prefix
   region                   = var.aws_region
@@ -131,7 +151,9 @@ module "gateway_policy" {
 # API Gateway + Lambda are gated behind enable_console.
 # Gate: gate-0.2 Cognito/API Gateway contract + Next.js hosting URL confirmed.
 module "console_api" {
-  source = "./modules/console-api"
+  source              = "./modules/console-api"
+  lambda_package_path = data.archive_file.lambda_package.output_path
+  lambda_package_hash = data.archive_file.lambda_package.output_base64sha256
 
   name_prefix         = var.name_prefix
   region              = var.aws_region
@@ -146,7 +168,9 @@ module "console_api" {
 # Nova Sonic read-only voice adapter (off by default, CCG-REQ-032).
 # Gate: gate-0.3 Nova Sonic contract + microphone consent flow implemented.
 module "voice_adapter" {
-  source = "./modules/voice-adapter"
+  source              = "./modules/voice-adapter"
+  lambda_package_path = data.archive_file.lambda_package.output_path
+  lambda_package_hash = data.archive_file.lambda_package.output_base64sha256
 
   name_prefix         = var.name_prefix
   region              = var.aws_region
