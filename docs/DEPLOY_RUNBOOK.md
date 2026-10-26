@@ -45,6 +45,19 @@ Approve in HCP. This creates the four resources. No permit is enforced (`LOG_ONL
 
 With the Gateway live, capture the items in `AGENTCORE_CAPABILITY_RECORD.md` that require a running Gateway. All read-only:
 
+**Fastest path — run the automated capture first.** It performs the read-only
+probes below (identity, OIDC provider, gateways, policy engines, Nova Sonic) and
+prints a paste-ready report mapped to the record sections:
+
+```bash
+export AWS_PROFILE=ccg-sandbox AWS_PAGER="" AWS_DEFAULT_REGION=us-east-1
+aws sso login --profile ccg-sandbox          # if the SSO token expired
+python scripts/gate02_capture.py
+```
+
+Then run the targeted gateway/policy-engine calls below for the deeper
+per-resource shapes the script summarizes:
+
 ```bash
 export AWS_PROFILE=ccg-sandbox AWS_PAGER="" AWS_DEFAULT_REGION=us-east-1
 aws sso login --profile ccg-sandbox          # if the SSO token expired

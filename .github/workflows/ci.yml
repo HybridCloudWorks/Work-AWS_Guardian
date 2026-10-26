@@ -99,6 +99,17 @@ jobs:
       - run: python scripts/seed_drift.py --help
       - run: PYTHONPATH=src python -m ccg.demo
       - run: python scripts/gate02_preflight.py
+      # Read-only capability-capture probe. No AWS creds in CI, so it reports
+      # PENDING and exits 0 — this proves the script runs without crashing.
+      - run: python scripts/gate02_capture.py
+      # Reproducible Lambda package build: build twice and assert a byte-stable
+      # hash so source_code_hash never churns on identical code.
+      - name: Lambda package builds reproducibly
+        run: |
+          H1=$(python scripts/build_lambda_package.py --out dist/a.zip | awk '/source_code_hash/{print $NF}')
+          H2=$(python scripts/build_lambda_package.py --out dist/b.zip | awk '/source_code_hash/{print $NF}')
+          echo "hash1=$H1"; echo "hash2=$H2"
+          test -n "$H1" && test "$H1" = "$H2" || { echo "non-deterministic build"; exit 1; }
 
   console:
     runs-on: ubuntu-latest
