@@ -20,3 +20,6 @@ out/
 *.tsbuildinfo
 .terraform.lock.hcl.*
 .vscode/
+
+# Operator-owned Terraform backend (never commit; see backend.tf.example)
+backend.tf

@@ -1,0 +1,206 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Continuous Compliance Guardian (CCG) - bootstrap deployment role.
+  Creates ONE scoped IAM role that a Terraform runner (local, CI, or HCP)
+  assumes to deploy CCG into THIS account. No admin, no static keys, no inline
+  pasted policy. Launch this stack once per account; then point your Terraform
+  provider at the role via `assume_role`. See DISTRIBUTION.md.
+
+# ---------------------------------------------------------------------------
+# PLACEHOLDERS: every value below is a parameter. Nothing is hardcoded.
+# ---------------------------------------------------------------------------
+Parameters:
+  NamePrefix:
+    Type: String
+    Default: ccg
+    AllowedPattern: "^[a-z0-9-]{3,24}$"
+    Description: Must match the Terraform var.name_prefix. Scopes resource ARNs.
+  TrustedPrincipalArn:
+    Type: String
+    Default: "arn:aws:iam::000000000000:root"  # PLACEHOLDER - your Terraform runner/role/user ARN
+    Description: >-
+      ARN allowed to assume the deploy role (your CI role, SSO permission-set
+      role, or HCP OIDC run role). Replace the placeholder account id.
+  ExternalId:
+    Type: String
+    Default: "REPLACE_WITH_RANDOM_EXTERNAL_ID"  # PLACEHOLDER - confused-deputy guard
+    NoEcho: true
+    Description: Shared secret required on AssumeRole (sts:ExternalId).
+  DeployRoleName:
+    Type: String
+    Default: ccg-deploy
+    Description: Name of the created deployment role.
+
+Resources:
+  CCGDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref DeployRoleName
+      Description: Scoped role that deploys Continuous Compliance Guardian via Terraform.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref TrustedPrincipalArn
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalId
+      Policies:
+        - PolicyName: ccg-deploy-scoped
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # --- Serverless + storage resources, scoped by name prefix -----
+              - Sid: LambdaManage
+                Effect: Allow
+                Action:
+                  - lambda:CreateFunction
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:DeleteFunction
+                  - lambda:GetFunction
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                  - lambda:TagResource
+                Resource: !Sub "arn:aws:lambda:*:${AWS::AccountId}:function:${NamePrefix}-*"
+              - Sid: DynamoManage
+                Effect: Allow
+                Action:
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteTable
+                  - dynamodb:DescribeTable
+                  - dynamodb:DescribeContinuousBackups
+                  - dynamodb:UpdateContinuousBackups
+                  - dynamodb:TagResource
+                  - dynamodb:UpdateTable
+                Resource: !Sub "arn:aws:dynamodb:*:${AWS::AccountId}:table/${NamePrefix}-*"
+              - Sid: S3Manage
+                Effect: Allow
+                Action:
+                  - s3:CreateBucket
+                  - s3:DeleteBucket
+                  - s3:PutBucketPolicy
+                  - s3:PutBucketTagging
+                  - s3:PutBucketVersioning
+                  - s3:PutBucketPublicAccessBlock
+                  - s3:PutBucketOwnershipControls
+                  - s3:PutEncryptionConfiguration
+                  - s3:PutLifecycleConfiguration
+                  - s3:PutBucketLogging
+                  - s3:GetBucketPolicy
+                  - s3:GetEncryptionConfiguration
+                Resource: !Sub "arn:aws:s3:::${NamePrefix}-*"
+              - Sid: LogsManage
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:DeleteLogGroup
+                  - logs:PutRetentionPolicy
+                  - logs:TagResource
+                  - logs:DescribeLogGroups
+                Resource: !Sub "arn:aws:logs:*:${AWS::AccountId}:log-group:/ccg/*"
+              - Sid: EventsManage
+                Effect: Allow
+                Action:
+                  - events:PutRule
+                  - events:DeleteRule
+                  - events:PutTargets
+                  - events:RemoveTargets
+                  - events:DescribeRule
+                  - events:TagResource
+                Resource: !Sub "arn:aws:events:*:${AWS::AccountId}:rule/${NamePrefix}-*"
+              # --- Console control plane (created only when enabled) ---------
+              - Sid: ApiGatewayManage
+                Effect: Allow
+                Action:
+                  - apigateway:POST
+                  - apigateway:GET
+                  - apigateway:DELETE
+                  - apigateway:PATCH
+                  - apigateway:PUT
+                Resource: "arn:aws:apigateway:*::/*"
+              - Sid: CognitoManage
+                Effect: Allow
+                Action:
+                  - cognito-idp:CreateUserPool
+                  - cognito-idp:DeleteUserPool
+                  - cognito-idp:CreateUserPoolClient
+                  - cognito-idp:DescribeUserPool
+                  - cognito-idp:TagResource
+                Resource: "*"  # Cognito CreateUserPool does not support resource-level scoping
+              # --- AgentCore Gateway / Cedar policy engine -------------------
+              - Sid: AgentCoreManage
+                Effect: Allow
+                Action:
+                  - bedrock-agentcore:CreateGateway
+                  - bedrock-agentcore:UpdateGateway
+                  - bedrock-agentcore:DeleteGateway
+                  - bedrock-agentcore:GetGateway
+                  - bedrock-agentcore:CreateGatewayTarget
+                  - bedrock-agentcore:DeleteGatewayTarget
+                  - bedrock-agentcore:CreatePolicyEngine
+                  - bedrock-agentcore:DeletePolicyEngine
+                  - bedrock-agentcore:GetPolicyEngine
+                  - bedrock-agentcore:CreatePolicy
+                  - bedrock-agentcore:UpdatePolicy
+                  - bedrock-agentcore:GetPolicy
+                Resource:
+                  - !Sub "arn:aws:bedrock-agentcore:*:${AWS::AccountId}:gateway/${NamePrefix}-*"
+                  - !Sub "arn:aws:bedrock-agentcore:*:${AWS::AccountId}:policy-engine/${NamePrefix}-*"
+                  - !Sub "arn:aws:bedrock-agentcore:*:${AWS::AccountId}:policy/${NamePrefix}-*"
+              # --- IAM: only the CCG execution roles, prefix-scoped ----------
+              - Sid: IamManageCcgRolesOnly
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:DeleteRole
+                  - iam:GetRole
+                  - iam:PassRole
+                  - iam:PutRolePolicy
+                  - iam:DeleteRolePolicy
+                  - iam:GetRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:TagRole
+                Resource: !Sub "arn:aws:iam::${AWS::AccountId}:role/${NamePrefix}-*"
+              # --- Read-only identity/plan helpers ---------------------------
+              - Sid: ReadOnlyPlanHelpers
+                Effect: Allow
+                Action:
+                  - sts:GetCallerIdentity
+                  - bedrock:ListFoundationModels
+                Resource: "*"
+              # --- Hard denies: never prod, never org admin ------------------
+              - Sid: DenyProductionTargets
+                Effect: Deny
+                Action: "*"
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:ResourceTag/Environment: prod
+              - Sid: DenyPrivilegeEscalation
+                Effect: Deny
+                Action:
+                  - iam:CreateUser
+                  - iam:CreateAccessKey
+                  - iam:AttachUserPolicy
+                  - iam:PutUserPolicy
+                  - organizations:*
+                  - account:*
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: comp_guardian
+        - Key: ManagedBy
+          Value: cloudformation-bootstrap
+
+Outputs:
+  DeployRoleArn:
+    Description: Set this as the Terraform provider assume_role.role_arn.
+    Value: !GetAtt CCGDeployRole.Arn
+  HowToUse:
+    Description: Next step.
+    Value: !Sub "Configure the AWS provider with assume_role { role_arn = \"${CCGDeployRole.Arn}\", external_id = <ExternalId> } then run terraform apply."
