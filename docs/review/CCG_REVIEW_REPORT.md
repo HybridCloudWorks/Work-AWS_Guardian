@@ -21,11 +21,30 @@ The single most important correction: **the codebase and its own docs describe t
 
 Nothing is deployed to the cloud (sandbox `<redacted>` is a clean slate), so **none of these findings represent live exposure today.** They are gating issues that must be resolved before the enforcement-mode deploy — which is exactly the right time to catch them.
 
+# Remediation status addendum (updated 2026-10)
+
+**This review was dated 2026-09-18. The findings below are preserved as written for the record.** Since then the project moved to the `HybridCloudWorks` org and the team implemented most of the remediation plan. Current status, verified against `origin/main` (`bdaf193`):
+
+| Finding | Status | Evidence on current `main` |
+|---|---|---|
+| **C1** LOG_ONLY mislabeled fail-closed | ✅ Resolved | `modules/agentcore-gateway/main.tf` comment now states the "fail-closed because forbids enforce" claim "is false"; ADR 0002 records the correction. |
+| **C2** Prod gateway pass-through, untested | ✅ Resolved | New `src/ccg/gateway_core.py` `GatewayInvocationSkeleton` centralizes decision/idempotency/audit; `AgentCoreGatewayClient` uses it; `tests/test_gateway_live_path.py` added. |
+| **H1** IAM S3 tag-gate fail-open | ✅ Resolved | `modules/iam-policies/main.tf` scopes S3 by ARN (no `arn:aws:s3:::*`), with a comment citing "P1.3 / finding H1". |
+| **H2** `observability.py` dead code | ✅ Resolved | `MetricSink` now emitted across `audit`, `discovery`, `policy`, `voice`, `seed`, `gateway_core`. |
+| **H3** Idempotency not centralized | ✅ Addressed | Idempotency replay now lives in the shared `gateway_core.py` invoke flow. |
+| **H4** Protocol missing `update_policy_set` | ✅ Resolved | `PolicyControlPlaneTransport` now declares `update_policy_set`. |
+| **M8** CI pinned a nonexistent Terraform version | ✅ Resolved | `.github/workflows/ci.yml` now pins `terraform_version: 1.16.5`. |
+| **M9** Doc test-count contradiction | ✅ Resolved | Baseline/reconciliation docs corrected; single current count is **389 tests** (388 passed, 1 skipped). |
+
+**Still open / to verify:** the remaining Medium/Low items (reconcile evidence-binding M1, contract deep-freeze M3, DynamoDB deletion-protection default M4, AWS-managed-keys trade-off M5 (accepted via ADR 0003), audit redaction value-patterns M7, console decision-evidence display L2, `aws:SourceArn` on gateway trust L4, submodule `required_providers`, sensitive outputs L5). These should be re-verified against current `main` before being actioned, as several may already be closed.
+
+The enforcement-mode deploy gate (ENFORCE + default-deny Cedar, gated on the live gate-0.2 capture) remains the correct final step.
+
 # Method & scope
 
 - **Agents used:** 3× context-gatherer (code / IaC / architecture) + 1× semantic_reviewer, each briefed adversarially ("assume something is wrong").
 - **Verification:** every Critical/High was re-checked by direct command against source of truth — the AWS `bedrock-agentcore-control` service model for LOG_ONLY semantics, `grep` for dead code, `pytest --collect-only` for the true test count, and `gh run list` to disprove one false-alarm finding.
-- **Scope:** `src/ccg/` (16 modules), `tests/` (117 tests), all Terraform (`main.tf`, 5 modules), `.github/workflows/ci.yml`, `console/`, and all `docs/` + `.kiro/specs`.
+- **Scope (at review time, 2026-09-18):** `src/ccg/` (16 modules), `tests/` (117 tests), all Terraform (`main.tf`, 5 modules), `.github/workflows/ci.yml`, `console/`, and all `docs/` + `.kiro/specs`. *(The codebase has since grown to 23 `src/ccg` modules, 389 tests, and 11 Terraform modules — see the Remediation status addendum.)*
 - **Honesty note:** one agent finding (CI `-backend=false` conflicting with the `cloud{}` block) was **not reproduced** — the terraform CI job is green on every recent merge. It is listed under "Rejected findings," not as a defect.
 
 # Findings register
