@@ -1,3 +1,9 @@
+locals {
+  # Use the built CCG package when provided; fall back to the committed
+  # placeholder so the module still validates/plans before a real build.
+  lambda_package = var.lambda_package_path != "" ? var.lambda_package_path : "${path.module}/placeholder.zip"
+}
+
 # EventBridge schedule and discovery Lambda stub.
 #
 # Design §3.1: EventBridge invokes a Python 3.14 discovery Lambda at a
@@ -183,7 +189,8 @@ resource "aws_lambda_function" "discovery" {
 
   # Placeholder: replace with an aws_s3_object data source or
   # aws_lambda_function_url once the deployment package exists.
-  filename = "${path.module}/placeholder.zip"
+  filename         = local.lambda_package
+  source_code_hash = var.lambda_package_hash != "" ? var.lambda_package_hash : null
 
   timeout     = var.lambda_timeout_seconds
   memory_size = var.lambda_memory_mb

@@ -1,3 +1,9 @@
+locals {
+  # Use the built CCG package when provided; fall back to the committed
+  # placeholder so the module still validates/plans before a real build.
+  lambda_package = var.lambda_package_path != "" ? var.lambda_package_path : "${path.module}/placeholder.zip"
+}
+
 # Nova Sonic read-only voice adapter stub.
 #
 # Design §3.5 / CCG-REQ-030 through CCG-REQ-033:
@@ -29,10 +35,11 @@ resource "aws_lambda_function" "voice_adapter" {
   function_name = "${var.name_prefix}-voice-adapter"
   description   = "CCG POC read-only Nova Sonic voice adapter — finding summaries only; no mutation tools."
 
-  runtime  = "python3.14"
-  handler  = "ccg.voice_handler.lambda_handler"
-  role     = aws_iam_role.voice_adapter[0].arn
-  filename = "${path.module}/placeholder.zip"
+  runtime          = "python3.14"
+  handler          = "ccg.voice_handler.lambda_handler"
+  role             = aws_iam_role.voice_adapter[0].arn
+  filename         = local.lambda_package
+  source_code_hash = var.lambda_package_hash != "" ? var.lambda_package_hash : null
 
   timeout     = var.lambda_timeout_seconds
   memory_size = var.lambda_memory_mb

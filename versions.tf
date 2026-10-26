@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "= 6.64.0"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
   }
 
   # NOTE: No backend/cloud block is declared here so this configuration can be
