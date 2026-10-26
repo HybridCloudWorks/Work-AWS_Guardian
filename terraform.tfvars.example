@@ -1,12 +1,39 @@
+# Continuous Compliance Guardian - example variables.
+# Copy to terraform.tfvars (gitignored) and override. All values are PLACEHOLDERS.
+
+# --- Core (override per deployment) ---------------------------------------
 aws_region            = "us-east-1"
-name_prefix           = "ccg-poc"
-environment           = "sandbox"
+name_prefix           = "ccg"       # unique per deployment; scopes all ARNs
+environment           = "sandbox"   # tag only; prod targets are always refused at the boundary
 audit_expiration_days = 30
 log_retention_days    = 7
 
-# AgentCore Gateway feature flag. Leave false for all normal runs.
-# Set true ONLY for the reviewed HCP schema-capture apply (see
-# docs/DEPLOY_RUNBOOK.md). When true, Terraform creates the Gateway execution
-# role, the Gateway (protocol MCP, AWS_IAM auth), and the Policy Engine bound in
-# LOG_ONLY mode (permits inactive / fail-closed).
+# Extra tags merged onto all resources (CCGDemo/Environment are module-managed).
+tags = {
+  # CostCenter = "sec-eng"
+  # Owner      = "platform"
+}
+
+# --- Component feature flags (all default false; enable in stages) ---------
+# Safe to enable early (no runtime cost / no live AWS calls):
+enable_identity_roles               = false  # 4 scoped execution roles
+enable_findings_deletion_protection = true   # set false only for teardown
+enable_audit_access_logging         = true
+
+# Require a confirmed capability-capture gate before enabling:
+enable_discovery         = false  # EventBridge + discovery Lambda
+discovery_schedule       = "rate(15 minutes)"
+enable_remediation_tools = false  # 4 tool Lambdas
+enable_console           = false  # API Gateway + Cognito + API Lambda
+enable_voice             = false  # Nova Sonic read-only adapter (gate 0.3)
+
+# AgentCore Gateway. Leave false for normal runs. Set true ONLY for the
+# reviewed schema-capture apply (docs/DEPLOY_RUNBOOK.md). When true, Terraform
+# creates the Gateway execution role, the Gateway (MCP, AWS_IAM auth), and the
+# Policy Engine bound in LOG_ONLY mode.
+#
+# IMPORTANT: LOG_ONLY evaluates policies but DOES NOT ENFORCE them (see ADR
+# 0002). The schema-capture deploy is safe because no permits exist yet, NOT
+# because forbids are enforced. Enforcement requires a later ENFORCE-mode
+# activation with a default-deny policy set.
 enable_agentcore_gateway = false

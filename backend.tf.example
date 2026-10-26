@@ -1,0 +1,27 @@
+# Copy this file to backend.tf (gitignored) and keep ONE block, then
+# `terraform init`. A distributable module declares no backend of its own;
+# the operator owns backend choice. Do not commit backend.tf.
+
+# --- Option A: HashiCorp Cloud Platform (Terraform Cloud) -------------------
+# terraform {
+#   cloud {
+#     organization = "REPLACE_WITH_YOUR_TFC_ORG"
+#     workspaces {
+#       name = "REPLACE_WITH_YOUR_WORKSPACE"
+#     }
+#   }
+# }
+
+# --- Option B: S3 + DynamoDB lock (self-managed remote state) ---------------
+# terraform {
+#   backend "s3" {
+#     bucket         = "REPLACE_WITH_YOUR_STATE_BUCKET"
+#     key            = "continuous-compliance-guardian/terraform.tfstate"
+#     region         = "REPLACE_WITH_YOUR_REGION"
+#     dynamodb_table = "REPLACE_WITH_YOUR_LOCK_TABLE"
+#     encrypt        = true
+#   }
+# }
+
+# --- Option C: local state (evaluation only; not for shared/team use) -------
+# (no block needed — omit backend.tf entirely to use local state)
