@@ -44,6 +44,14 @@ def test_oidc_provider_detected():
     assert item.captured and "present" in item.value
 
 
+def test_oidc_rejects_spoofed_lookalike_host():
+    # CodeQL py/incomplete-url-substring-sanitization guard: a lookalike host
+    # must NOT be treated as the real app.terraform.io provider.
+    out = json.dumps({"OpenIDConnectProviderList": [{"Arn": "arn:aws:iam::1:oidc-provider/app.terraform.io.evil.com"}]})
+    item = cap.capture_oidc_provider(runner=_runner(out), which=_have_aws)
+    assert not item.captured
+
+
 def test_oidc_access_denied_is_actionable():
     item = cap.capture_oidc_provider(runner=_runner(returncode=254, stderr="AccessDenied ..."), which=_have_aws)
     assert not item.captured

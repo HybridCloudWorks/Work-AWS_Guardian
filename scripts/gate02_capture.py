@@ -71,7 +71,10 @@ def capture_oidc_provider(runner=subprocess.run, which=shutil.which) -> CaptureI
         detail = "AccessDenied (scoped role) - verify via admin/console" if "AccessDenied" in out else out
         return CaptureItem("§0 OIDC provider", "app.terraform.io OIDC provider", False, detail, cmd)
     arns = [p.get("Arn", "") for p in json.loads(out).get("OpenIDConnectProviderList", [])]
-    hit = any("terraform.io" in a for a in arns)
+    # Match the exact OIDC provider host at the end of the ARN
+    # (arn:aws:iam::<acct>:oidc-provider/app.terraform.io), not a loose
+    # substring — a substring check would also match e.g. app.terraform.io.evil.
+    hit = any(a.endswith("/app.terraform.io") or a.endswith(":oidc-provider/app.terraform.io") for a in arns)
     return CaptureItem("§0 OIDC provider", "app.terraform.io OIDC provider", hit,
                        "present" if hit else f"not found among {len(arns)} providers", cmd)
 
