@@ -23,3 +23,6 @@ out/
 
 # Operator-owned Terraform backend (never commit; see backend.tf.example)
 backend.tf
+
+# Lambda build artifacts (reproducible; built by scripts/build_lambda_package.py)
+dist/
