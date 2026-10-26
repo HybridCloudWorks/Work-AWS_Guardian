@@ -248,3 +248,77 @@ def default_tool_handlers() -> dict[str, Callable[..., ToolResult]]:
         TOOL_TAGGING: compliant_tagging,
         TOOL_ACCESS_KEY_ROTATION: access_key_rotation,
     }
+
+
+# ---------------------------------------------------------------------------
+# AWS Lambda entrypoints (one per registered tool).
+#
+# These are the `handler` targets referenced by modules/remediation-tools.
+# They are invoked ONLY by the AgentCore Gateway MCP target AFTER a Cedar ALLOW
+# — the Gateway is the authorization boundary; these handlers are the executor
+# behind it and additionally re-check safety tags (defense in depth).
+#
+# SCOPE NOTE (gate-0.2): the exact MCP event envelope AgentCore delivers is not
+# yet captured, and the live AWS Effector (real boto3 SG/S3/IAM mutations) is
+# gated on gate-0.2. Until then these entrypoints parse a documented request
+# envelope and run the pure tool with the DryRunEffector, returning the typed
+# ToolResult as JSON. Swapping in the live event parser + boto3 Effector is the
+# only remaining change; the tool logic and safety rechecks are already final.
+# ---------------------------------------------------------------------------
+
+
+
+def _request_from_event(event: Mapping[str, JsonValue]) -> RemediationRequest:
+    """Build a RemediationRequest from the invocation event.
+
+    The envelope keys below are the module's documented contract; the live
+    AgentCore MCP mapping is confirmed at gate-0.2 and adapts to this shape.
+    The target is taken from the event as resolved server-side by the caller
+    (the API resolves it from the finding); the handler never trusts a
+    caller-supplied target beyond this boundary and re-checks its safety tags.
+    """
+    target = event.get("target", {})
+    if not isinstance(target, Mapping):
+        raise ToolInputError("event.target must be an object")
+    return RemediationRequest(
+        request_id=str(event.get("request_id", "")),
+        correlation_id=str(event.get("correlation_id", "")),
+        actor=str(event.get("actor", "")),
+        tool=str(event.get("tool", "")),
+        target=TargetRef(
+            arn=str(target.get("arn", "")),
+            resource_type=str(target.get("resource_type", "")),
+            tags={str(k): str(v) for k, v in dict(target.get("tags", {})).items()},
+        ),
+        parameters=dict(event.get("parameters", {})),  # type: ignore[arg-type]
+        idempotency_key=str(event.get("idempotency_key", "")),
+    )
+
+
+def _run_tool_handler(tool_fn: Callable[..., ToolResult], event, _context) -> dict[str, JsonValue]:
+    """Shared Lambda body: parse -> run (dry-run effector) -> JSON ToolResult."""
+    try:
+        request = _request_from_event(event if isinstance(event, Mapping) else {})
+        result = tool_fn(request, DryRunEffector())
+    except (ToolInputError, ValueError) as exc:
+        # ToolInputError: bad parameters. ValueError: malformed event envelope
+        # (e.g. contract validation in RemediationRequest/TargetRef). Both must
+        # become a safe FAILED result, never an unhandled Lambda crash.
+        return {"outcome": ToolOutcome.FAILED.value, "message": str(exc), "changed": False}
+    return result.to_record()
+
+
+def sg_correction_handler(event, context=None) -> dict[str, JsonValue]:
+    return _run_tool_handler(security_group_correction, event, context)
+
+
+def s3_encryption_handler(event, context=None) -> dict[str, JsonValue]:
+    return _run_tool_handler(s3_encryption_enablement, event, context)
+
+
+def tagging_handler(event, context=None) -> dict[str, JsonValue]:
+    return _run_tool_handler(compliant_tagging, event, context)
+
+
+def key_rotation_handler(event, context=None) -> dict[str, JsonValue]:
+    return _run_tool_handler(access_key_rotation, event, context)
